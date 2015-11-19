@@ -1,0 +1,205 @@
+
+
+<!--Layout Templates-->
+<template name="ApplicationLayout">
+    <header>
+        <h1>TBD.FM</h1>
+        <Nav>
+            {{> loginButtons }}
+            {{#linkTo route='classifieds'}}Browse Classifieds{{/linkTo}}
+            {{#if currentUser}}
+                {{#linkTo route='classifieds.mine'}}My Ads{{/linkTo}}
+                {{#linkTo route='classified.new'}}Post a new Ad{{/linkTo}}
+            {{/if}}
+        </Nav>
+
+    </header>
+    <aside>
+        {{> yield "aside"}}
+    </aside>
+    <article>
+        {{> yield}}
+    </article>
+    <footer>
+        {{> yield "footer"}}
+    </footer>
+</template>
+
+<!--Route Templates-->
+
+<!--Classifieds-->
+
+<template name="allClassifieds">
+    <h2>Browse Classifieds</h2>
+    <ul>
+        {{#each classifieds}}
+            {{> classifiedStub}}
+        {{/each}}
+    </ul>
+</template>
+
+<template name="ClassifiedsMine">
+    <h2>My Classifieds</h2>
+    <ul>
+        {{#each classifieds}}
+            {{> classifiedStub}}
+        {{/each}}
+    </ul>
+</template>
+
+
+
+
+<template name="ClassifiedNew">
+    {{#if currentUser}}
+        {{> newClassifiedForm }}
+        {{else}}
+        You've got to be signed if you want to post new stuff. Look at the top of the page for a "Sign In" button. If you haven't already got an account you can sign up on that same form as well.
+    {{/if}}
+</template>
+<template name="ClassifiedEdit">
+    {{>editClassifiedForm}}
+</template>
+
+<template name="ClassifiedShow">
+    <div>
+
+        {{> ClassifiedDetailView}}
+        {{#if isClassifiedOwner}}
+            <div class="ownerStuff">
+                <button class="edit-button">Edit</button>
+            </div>
+            {{else}}
+                {{#if okMakeNewOffer}}
+                    {{> OfferNew}}
+                {{/if}}
+        {{/if}}
+        {{#if currentUser}}
+            {{> OffersView}}
+        {{else}}
+            {{> Yuno}}
+        {{/if}}
+
+    </div>
+</template>
+
+
+<template name="Yuno">
+    <div class="encourage-sign-up">
+        People who are logged in can make offers. Y u no sign up?
+    </div>
+</template>
+
+<template name="BuyerOffers">
+    {{#each offer}}
+        {{> OfferShow}}
+    {{/each}}
+</template>
+
+<template name="ClassifiedDetailView">
+    <h2>{{title}} - ${{price}}</h2>
+    <h3>posted by {{username}} : {{#if posted}}posted{{/if}}</h3>
+    <p>{{description}}</p>
+
+
+</template>
+
+
+<template name="editClassifiedForm">
+    <div class="edit-classi-view">
+        <h2>Edit this shit</h2>
+        <div class="classi-builder">
+            <form class="classified-fields">
+                {{> classifiedFields}}
+                <button class="save-button">Save</button>
+            </form>
+            <button class="delete-button">Delete</button>
+        </div>
+        <!--<div class="classi-preview">-->
+        <!--<h2>Live Preview</h2>-->
+        <!--{{> ClassifiedShow}}-->
+        <!--</div>-->
+    </div>
+</template>
+
+<template name="classifiedFields">
+    <input type="text" name="title" value="{{title}}" placeholder="Title this item" />
+    <input type="checkbox" name="posted" checked="{{posted}}" class="toggle-posted"/>
+    <input type="text" name="sku" value="{{sku}}" class="sku-input"/>
+</template>
+
+<template name="newClassifiedForm">
+    <form class="classified-fields">
+        {{> classifiedFields}}
+        <button class="save-button">Create</button>
+    </form>
+</template>
+
+<template name="classifiedStub">
+    <li>
+        <a href="{{pathFor route='classified.show'}}">
+            {{title}}
+        </a>
+    </li>
+</template>
+
+<!--Offer Templates-->
+
+<template name="OfferNew">
+    <form class="new-offer-form">
+        <input type="number" name="amnt" value="{{amnt}}" placeholder="Offer Amount"/>
+        <input type="text" name="msg" value="{{msg}}" placeholder="Message, be nice."/>
+        <button class="new-offer-button">#dealwithit</button>
+    </form>
+</template>
+
+<template name="OffersView">
+    {{#each offersForClassi}}
+        {{> OfferShow}}
+    {{/each}}
+</template>
+
+<template name="OfferThread">
+    {{#each offer}}
+        offer
+    {{/each}}
+</template>
+
+<template name="OfferThreads">
+    {{#each thread}}
+       offer exists
+    {{/each}}
+</template>
+
+<template name="OfferShow">
+    <div>
+        {{#if isSender}}
+            You Offered: {{amnt}} <br>
+            You Said: {{msg}}<br>
+        {{else}}
+            They Offered: {{amnt}} <br>
+            They Said: {{msg}}<br>
+            {{#if okToCounter}}
+                <form class="counter-offer-form">
+                    <input type="number" name="amnt" value="{{amnt}}" placeholder="Offer Amount"/>
+                    <input type="text" name="msg" value="{{msg}}" placeholder="Message, be nice."/>
+                    <button class="make-counter-offer">How about...</button>
+                </form>
+                <button class="accept-offer-button">
+                    Deal!
+                </button>
+            {{/if}}
+        {{/if}}
+
+        Offer Status: {{status}}
+    </div>
+    <hr>
+</template>
+
+<template name="OfferSenderView">
+
+</template>
+
+<template name="OfferSellerView">
+    Seller View Goes here
+</template>
