@@ -46,14 +46,14 @@ Router.route('/classifieds/new', function() {
 Router.route('/classified/:_id', function(){
   var classId = this.params._id;
   this.layout('ApplicationLayout');
-  
+
   this.render('ClassifiedShow', {
     data:
     function(){
       return Classifieds.findOne({_id: classId})
     }
   });
-  
+
 },{
   name: 'classified.show'
 });
@@ -67,12 +67,11 @@ Router.route('classifieds/:_id/offers/:buyerId', function() {
 });
 
 Router.route('/classified/:_id/edit', function(){
-  this.render('ClassifiedEdit',
-              {
-                data: function () {
-                  return Classifieds.findOne({_id: this.params._id})
-                }
-              });
+  this.render('ClassifiedEdit',{
+    data: function () {
+      return Classifieds.findOne({_id: this.params._id})
+    }
+  });
 },{
   name: 'classified.edit'
 });
@@ -109,34 +108,46 @@ if (Meteor.isServer) {
 //Client
 
 if (Meteor.isClient) {
-  
+
   Meteor.subscribe("classifieds");
   Meteor.subscribe('offers');
-  
+
   Template.editClassifiedForm.events({
     "submit .classified-fields": function(event) {
       event.preventDefault();
       var deltaClassi = {};
       deltaClassi.title = event.target.title.value;
       deltaClassi.posted = event.target.posted.checked;
+      deltaClassi.asking = event.target.asking.value;
+      deltaClassi.willship = event.target.willship.checked;
+      deltaClassi.shiprestric = event.target.shiprestric.value;
+      deltaClassi.desc = event.target.desc.value;
+      deltaClassi.problems = event.target.problems.value;
+      deltaClassi.mods = event.target.mods.value;
       Meteor.call("updateClassified",this._id, deltaClassi);
     },
     "click .delete-button" : function(){
       Meteor.call("deleteClassified", this._id);
     }
   });
-  
-  
+
+
   Template.newClassifiedForm.events({
     "submit .classified-fields" : function(event){
       event.preventDefault();
       var newClassi = {};
       newClassi.title = event.target.title.value;
       newClassi.posted = event.target.posted.checked;
+      newClassi.asking = event.target.asking.value;
+      newClassi.willship = event.target.willship.checked;
+      newClassi.shiprestric = event.target.shiprestric.value;
+      newClassi.desc = event.target.desc.value;
+      newClassi.problems = event.target.problems.value;
+      newClassi.mods = event.target.mods.value;
       Meteor.call("addClassified", newClassi);
       event.target.title.value="";
     }
-    
+
   });
   Template.ClassifiedShow.helpers({
     isClassifiedOwner: function () {
@@ -148,13 +159,13 @@ if (Meteor.isClient) {
       if(this.owner === Meteor.userId()){
         //look to see who's selected (if anyone)
         //return only offers between seller & selected
-        
+
       } else {
         //else just return them all
         return Offers.find({classi: this._id});
       }
-      
-      
+
+
     }
     ,buyersWithOffersIn: function(){
       return Offers.find({classi: this._id,});
@@ -166,21 +177,21 @@ if (Meteor.isClient) {
           {classi: this._id, createdBy: Meteor.userId()}
         ]
       }).count() == 0;
-      
+
     }
-    
-    
+
+
   });
-  
-  
+
+
   Template.ClassifiedShow.events({
     "click .edit-button": function () {
       Router.go('classified.edit', {_id: this._id});
     }
   });
-  
-  
-  
+
+
+
   Template.OfferNew.events({
     "submit .new-offer-form" : function(event) {
       event.preventDefault();
@@ -191,7 +202,7 @@ if (Meteor.isClient) {
       Meteor.call('addOffer', newOffer);
     }
   });
-  
+
   Template.OfferShow.events({
     "submit .counter-offer-form" : function(event) {
       event.preventDefault();
@@ -209,7 +220,7 @@ if (Meteor.isClient) {
       return this.classId === Meteor.userId();
     }
   });
-  
+
   Template.OfferShow.helpers({
     isSender: function () {
       return this.sender === Meteor.userId();
@@ -218,19 +229,19 @@ if (Meteor.isClient) {
       return this.status !== 'accepted' && this.status !== 'declined';
     }
   });
-  
+
   Template.OffersView.helpers({
     offersForClassi: function(){
       console.log(this._id);
       return Offers.find({classi: this._id});
     }
   });
-  
-  
+
+
   Accounts.ui.config({
     passwordSignupFields: "USERNAME_ONLY"
   });
-  
+
 }
 
 //Methods
@@ -240,13 +251,10 @@ Meteor.methods({
     if(! Meteor.userId()) {
       throw new Meteor.Error("not-authorized");
     }
-    Classifieds.insert({
-      title: classi.title,
-      posted: classi.posted,
-      owner: Meteor.userId(),
-      username: Meteor.user().username,
-      createdAt: new Date()
-    }, function(error, result){
+    classi.owner = Meteor.userId();
+    classi.username = Meteor.user().username;
+    classi.createdAt = new Date();
+    Classifieds.insert(classi, function(error, result){
       if(result){
         Router.go('classified.show', {_id: result});
       }
@@ -263,7 +271,7 @@ Meteor.methods({
     } else {
       throw new Meteor.Error("not-authorized");
     }
-    
+
     if(smellsOk){
       Offers.insert({
         amnt: offer.amnt,
@@ -298,7 +306,7 @@ Meteor.methods({
     var ownOfer = oldOffer.createdBy === Meteor.userId();
     //the buyer, and the offer was created by the seller
     var isRecipi = oldOffer.recipient === Meteor.userId();
-    
+
     if(Meteor.userId() && !acceptedOffersExist && !ownOfer && isRecipi){
       Offers.update(offerId, {
         $set: {
@@ -311,12 +319,12 @@ Meteor.methods({
         }
       });
     }
-    
-    
+
+
   },
   makeCounterOffer: function(offerId, newOffer) {
     //check that the submitter is logged in
-    
+
     //get the old offer
     var oldOffer = Offers.findOne(offerId);
     //check if offers exist already that are accepted
@@ -368,12 +376,15 @@ Meteor.methods({
   },
   updateClassified: function (classiId, updateObj){
     var oldObj = Classifieds.findOne(classiId);
-    if(oldObj.owner == Meteor.userId()) {
+    if(oldObj.owner === Meteor.userId()) {
       console.log(updateObj);
-      Classifieds.update(classiId, {
-        $set: {title: updateObj.title,
-               posted: updateObj.posted},
-      }, function(error, result){
+      //copy over hidden fields from old object
+      updateObj.createdAt = oldObj.createdAt;
+      updateObj.owner = oldObj.owner;
+      updateObj.updatedAt = new Date();
+      updateObj.username = oldObj.username;
+      
+      Classifieds.update(classiId, updateObj, function(error, result){
         if(result){
           Router.go('classified.show', {_id: classiId});
         }
@@ -381,4 +392,3 @@ Meteor.methods({
     }
   }
 });
-
