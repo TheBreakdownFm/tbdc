@@ -243,7 +243,6 @@ if (Meteor.isClient) {
   //ClassifiedShow
   Template.ClassifiedShow.helpers({
     isClassifiedOwner: function () {
-      console.log('isLCassifedOwner value: ' + this.owner);
       return this.owner === Meteor.userId();
     }
     ,offers : function() {
@@ -381,6 +380,12 @@ Meteor.methods({
 
   removeImageFromClassified: function(parent, img){
     //if meteoruser == classified owner
+    let classi = Classifieds.findOne(parent);
+    let isOwner = Meteor.userId() === classi.owner;
+
+    if(!Meteor.userId() || !isOwner){
+      throw new Meteor.Error('not-authorized');
+    }
     Classifieds.update(parent, {
       $pull: {
         images: img
