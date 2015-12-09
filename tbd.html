@@ -69,12 +69,12 @@
 
   {{#each images}}
   {{>ClassiImageShow}}
- 
   {{/each}}
 </template>
 
 <template name="ClassiImageShow">
-  <img src={{imageUrlForImageId}} alt={{imageUrlForImageId}}/>
+  <img src="{{imageUrlForImageId}}" alt="{{imageUrlForImageId}}" >
+  <button class="delete-image-button"> Remove This Image </button>
 </template>
 
 <template name="upload">
@@ -142,7 +142,11 @@
   {{else}}
   <h4>Local Pickup Only</h4>
   {{/if}}
-  
+
+  <h3>Images</h3>
+  {{#each image in images}}
+  <img src="{{image}}">
+  {{/each}}
   
 </template>
 

@@ -284,7 +284,11 @@ if (Meteor.isClient) {
 
   //ClassifiedImageShow
   Template.ClassiImageShow.events({
-    //handle image delete
+    "click .delete-image-button" : function(event){
+      let classi = Template.parentData(1)._id;
+      Meteor.call('removeImageFromClassified', classi, this + '');
+    }
+    
   });
 
   Template.ClassiImageShow.helpers({
@@ -375,6 +379,14 @@ Meteor.methods({
   
   //Classifieds
 
+  removeImageFromClassified: function(parent, img){
+    //if meteoruser == classified owner
+    Classifieds.update(parent, {
+      $pull: {
+        images: img
+      }
+    });
+  },
   addImageToClassified: function(parent, url) {
     Classifieds.update(parent, {
       $addToSet: {
@@ -414,6 +426,7 @@ Meteor.methods({
       updateObj.createdAt = oldObj.createdAt;
       updateObj.owner = oldObj.owner;
       updateObj.updatedAt = new Date();
+      updateObj.images = oldObj.images;
       updateObj.username = oldObj.username;
       
       Classifieds.update(classiId, updateObj, function(error, result){
