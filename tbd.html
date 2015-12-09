@@ -57,8 +57,40 @@
   You've got to be signed if you want to post new stuff. Look at the top of the page for a "Sign In" button. If you haven't already got an account you can sign up on that same form as well.
   {{/if}}
 </template>
+
 <template name="ClassifiedEdit">
   {{>editClassifiedForm}}
+  {{>upload}}
+  {{>ClassifiedImagesShow}}
+</template>
+
+<template name="ClassifiedImagesShow">
+  <h4>Images</h4>
+
+  {{#each images}}
+  {{>ClassiImageShow}}
+ 
+  {{/each}}
+</template>
+
+<template name="ClassiImageShow">
+  <img src={{imageUrlForImageId}} alt={{imageUrlForImageId}}/>
+</template>
+
+<template name="upload">
+  <h4 class="page-header">Upload a File to Amazon S3</h4>
+  {{> uploader}}
+</template>
+
+<template name="uploader">
+  <div class="upload-area">
+    <form id="upload">
+      <p class="alert alert-success text-center">
+        <span>Click or Drag a File Here to Upload</span>
+        <input type="file">
+      </p>
+    </form>
+  </div>
 </template>
 
 <template name="ClassifiedShow">
