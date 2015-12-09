@@ -93,30 +93,12 @@ Router.route('/classified/:_id/edit', function(){
 
 if (Meteor.isServer) {
 
-  //Slingshot - Set up Amazon S3
-  Slingshot.fileRestrictions( "uploadToAmazonS3" , {
-    allowedFileTypes: [ "image/png", "image/jpeg", "image/gif" ],
-    maxSize: 3 * 1024 * 1024
-  });
-  
-  Slingshot.createDirective("uploadToAmazonS3", Slingshot.S3Storage, {
-    bucket: "tbdc-photo",
-    acl: "public-read",
-    authorize: function () {
-      //Deny uploads if user is not logged in.
-      if (!this.userId) {
-        var message = "Please login before posting files";
-        throw new Meteor.Error("Login Required", message);
-      }
-      
-      return true;
-    },
-    key: function (file, metaContext) {
-      //Store file into a directory by the user's username.
-      return  metaContext.imgId;
-    }
-  });
-  
+  S3.config = {
+    key: Meteor.settings.AWSAccessKeyId,
+    secret: Meteor.settings.AWSSecretAccessKey,
+    bucket: 'tbdc-photo'
+  }
+ 
   //Publish Rules
   Meteor.publish('images', function() {
     return Images.find();
@@ -155,7 +137,7 @@ if (Meteor.isClient) {
   let template;
   
   
-  let _addImgForClassi = ( file, parent ) => {
+  let _addImgForClassi = ( url, parent ) => {
     
     Meteor.call('addImage', parent, function(error, result){
       if(error){
@@ -165,38 +147,40 @@ if (Meteor.isClient) {
       console.log('Result in addImageToClassified callback: ' + result);
 
       //Use that as the amazon url
-      _uploadFileToAmazonS3(file, result, parent);
-      
+            
     });
   }
     
   
-  let _getFileFromInput = (event) => event.target.files[0];
+  let _getFileFromInput = (event) => event.target.files;
   
   let _setPlaceholderText = ( string = "Upload a file!" ) => {
     template.find( ".alert span" ).innerText = string;
   }
   
-  let _uploadFileToAmazonS3 = ( file, imgId, parent ) => {
-    const uploader = new Slingshot.Upload("uploadToAmazonS3", {imgId: imgId});
-    uploader.send( file,  (error, url) => {
+  let _uploadFileToAmazonS3 = ( file, parent ) => {
+     //TODO make underscore each
+    S3.upload({
+      files: file,
+      unique_name: true
+    }, function(error, result){
       if(error){
-        //Bert.alert(error.message, "warning" );
-        console.log('ERROR: ' + error.message);
-        _setPlaceholderText();
+        console.log('ERROR: ' + error);
       }
-      console.log('it worked?' + url);
-      Meteor.call('addImageToClassified', parent, imgId);
-      
+      console.log('it worked?' + result.url);
+      Meteor.call('addImageToClassified', parent, result.url);
     });
   }
   
   let upload = function(options) {
     template = options.template;
+
     
     let file = _getFileFromInput( options.event);
     _setPlaceholderText('Uploading ' + file.name + '...');
-    _addImgForClassi( file, options.classiId )
+
+    _uploadFileToAmazonS3(file, options.classiId);
+
   };
   
   
@@ -305,7 +289,7 @@ if (Meteor.isClient) {
 
   Template.ClassiImageShow.helpers({
     imageUrlForImageId: function(){
-      return 'http://s3.amazonaws.com/tbdc-photo/' + this;  
+      return this;  
     }
   });
 
@@ -391,18 +375,17 @@ Meteor.methods({
   
   //Classifieds
 
-  //TODO: #callbackhell
-  addImageToClassified: function(classiId, imageId) {
-     Classifieds.update(classiId, {
-        $addToSet: {
-          images: imageId
-        }
-     },function(error, result){
-       if(error){
-         throw new Meteor.Error('bad-insert');
-       }
-       return result;
-     });
+  addImageToClassified: function(parent, url) {
+    Classifieds.update(parent, {
+      $addToSet: {
+        images: url
+      }
+    },function(error, result){
+      if(error){
+        throw new Meteor.Error('bad-insert');
+      }
+      return result;
+    });
   },
   addClassified: function(classi){
     if(! Meteor.userId()) {
