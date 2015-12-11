@@ -35,57 +35,80 @@ Router.route('/classifieds/', function(){
   name: 'classifieds'
 });
 
-
-
-Router.route('/classifieds/mine', function(){
-  this.render('ClassifiedsMine',{
+Router.route('/classifieds/cars', function(){
+  this.render('CarClassifieds', {
     data: {
       classifieds: function(){
-        return Classifieds.find({owner: Meteor.userId()}, {sort: {createdAt: -1}})
+        return Classifieds.find({owner: {$ne: Meteor.userId()}, adType: 'car'}, {sort: {createdAt: -1}})
       }
     }
   });
 },{
-  name: 'classifieds.mine'
+  name: 'classifieds.cars'
+});
+
+
+Router.route('/classifieds/parts', function(){
+  this.render('PartClassifieds', {
+    data: {
+      classifieds: function(){
+        return Classifieds.find({owner: {$ne: Meteor.userId()}, adType: 'part'}, {sort: {createdAt: -1}})
+      }
+    }
+  });
+},{
+  name: 'classifieds.parts'
+});
+
+Router.route('/classifieds/mine', function(){
+this.render('ClassifiedsMine',{
+data: {
+classifieds: function(){
+return Classifieds.find({owner: Meteor.userId()}, {sort: {createdAt: -1}})
+}
+}
+});
+},{
+name: 'classifieds.mine'
 });
 
 Router.route('/classifieds/new', function() {
-  this.render('ClassifiedNew');
+this.render('ClassifiedNew');
 },{
-  name: 'classified.new'
+name: 'classified.new'
 });
 
 Router.route('/classified/:_id', function(){
-  var classId = this.params._id;
-  this.layout('ApplicationLayout');
+var classId = this.params._id;
+this.layout('ApplicationLayout');
 
-  this.render('ClassifiedShow', {
-    data:
-    function(){
-      return Classifieds.findOne({_id: classId})
-    }
-  });
+this.render('ClassifiedShow', {
+data:
+function(){
+return Classifieds.findOne({_id: classId})
+}
+});
 
 },{
-  name: 'classified.show'
+name: 'classified.show'
 });
 
 Router.route('classifieds/:_id/offers/:buyerId', function() {
-  this.render('BuyerOffers', {
-    data: function() {
-      return Offers.find({classi: this.params._id, buyer: this.params.buyerId});
-    }
-  })
+this.render('BuyerOffers', {
+data: function() {
+return Offers.find({classi: this.params._id, buyer: this.params.buyerId});
+}
+})
 });
 
 Router.route('/classified/:_id/edit', function(){
-  this.render('ClassifiedEdit',{
-    data: function () {
-      return Classifieds.findOne({_id: this.params._id})
-    }
-  });
+this.render('ClassifiedEdit',{
+data: function () {
+return Classifieds.findOne({_id: this.params._id})
+}
+});
 },{
-  name: 'classified.edit'
+name: 'classified.edit'
 });
 
 
@@ -93,165 +116,172 @@ Router.route('/classified/:_id/edit', function(){
 
 if (Meteor.isServer) {
 
-  S3.config = {
-    key: Meteor.settings.AWSAccessKeyId,
-    secret: Meteor.settings.AWSSecretAccessKey,
-    bucket: 'tbdc-photo'
-  }
- 
-  //Publish Rules
-  Meteor.publish('images', function() {
-    return Images.find();
-  });
-  Meteor.publish("classifieds", function () {
-    return Classifieds.find({
-      $or: [
-        { posted: true},
-        { owner: this.userId }
-      ]
-    });
-  });
-  Meteor.publish('offers', function() {
-    return Offers.find({
-      $or: [
-        {recipient: this.userId},
-        {sender: this.userId}
-      ]
-    });
-  });
+S3.config = {
+key: Meteor.settings.AWSAccessKeyId,
+secret: Meteor.settings.AWSSecretAccessKey,
+bucket: 'tbdc-photo'
+}
+
+//Publish Rules
+Meteor.publish('images', function() {
+return Images.find();
+});
+Meteor.publish("classifieds", function () {
+return Classifieds.find({
+$or: [
+{ posted: true},
+{ owner: this.userId }
+]
+});
+});
+Meteor.publish('offers', function() {
+return Offers.find({
+$or: [
+{recipient: this.userId},
+{sender: this.userId}
+]
+});
+});
 }
 
 
 //Startup items
 if (Meteor.isServer) {
-  Meteor.startup(function () {
-    // code to run on server at startup
-  });
+Meteor.startup(function () {
+// code to run on server at startup
+});
 }
 
 //Client
 
 if (Meteor.isClient) {
 
-  //uploadToAmazonS3
-  let template;
-  
-  
-  let _addImgForClassi = ( url, parent ) => {
-    
-    Meteor.call('addImage', parent, function(error, result){
-      if(error){
-        console.log(error);
-      }
-      //'Reuslt should be the ID of a new image
-      console.log('Result in addImageToClassified callback: ' + result);
+//uploadToAmazonS3
+let template;
 
-      //Use that as the amazon url
-            
-    });
-  }
-    
-  
-  let _getFileFromInput = (event) => event.target.files;
-  
-  let _setPlaceholderText = ( string = "Upload a file!" ) => {
-    template.find( ".alert span" ).innerText = string;
-  }
-  
-  let _uploadFileToAmazonS3 = ( file, parent ) => {
-     //TODO make underscore each
-    S3.upload({
-      files: file,
-      unique_name: true
-    }, function(error, result){
-      if(error){
-        console.log('ERROR: ' + error);
-      }
-      console.log('it worked?' + result.url);
-      Meteor.call('addImageToClassified', parent, result.url);
-    });
-  }
-  
-  let upload = function(options) {
-    template = options.template;
+let _getFileFromInput = (event) => event.target.files;
 
-    
-    let file = _getFileFromInput( options.event);
-    _setPlaceholderText('Uploading ' + file.name + '...');
+let _setPlaceholderText = ( string = "Upload a file!" ) => {
+template.find( ".alert span" ).innerText = string;
+}
 
-    _uploadFileToAmazonS3(file, options.classiId);
+let _uploadFileToAmazonS3 = ( file, parent, followup ) => {
+//TODO make underscore each
+S3.upload({
+files: file,
+unique_name: true
+}, function(error, result){
+if(error){
+console.log('ERROR: ' + error);
+}
+console.log('it worked?' + result.url);
+Meteor.call(followup, parent, result.url);
+});
+}
 
-  };
-  
-  
-  Modules.client.uploadToAmazonS3 = upload;
-  
-  
-  //Subscriptions
-  Meteor.subscribe("classifieds");
-  Meteor.subscribe('offers');
-  Meteor.subscribe('images');
+let upload = function(options) {
+template = options.template;
 
-  //Uploader
-  Template.uploader.events({
-    'change input[type="file"]' (event, template){
-      Modules.client.uploadToAmazonS3({event: event, template: template, classiId: this._id});
-    }
-  });
-  
-  
 
-  //EditClassifiedForm
-  Template.editClassifiedForm.events({
-    "submit .classified-fields": function(event) {
-      event.preventDefault();
-      var deltaClassi = {};
-      deltaClassi.title = event.target.title.value;
-      deltaClassi.posted = event.target.posted.checked;
-      deltaClassi.asking = event.target.asking.value;
-      deltaClassi.willship = event.target.willship.checked;
-      deltaClassi.shiprestric = event.target.shiprestric.value;
-      deltaClassi.desc = event.target.desc.value;
-      deltaClassi.problems = event.target.problems.value;
-      deltaClassi.mods = event.target.mods.value;
-      Meteor.call("updateClassified",this._id, deltaClassi);
-    },
-    "click .delete-button" : function(){
-      Meteor.call("deleteClassified", this._id);
-    }
-  });
-  
-  //NewClassifiedForm
-  Template.newClassifiedForm.events({
-    "submit .classified-fields" : function(event){
-      event.preventDefault();
-      var newClassi = {};
-      newClassi.title = event.target.title.value;
-      newClassi.posted = event.target.posted.checked;
-      newClassi.asking = event.target.asking.value;
-      newClassi.willship = event.target.willship.checked;
-      newClassi.shiprestric = event.target.shiprestric.value;
-      newClassi.desc = event.target.desc.value;
-      newClassi.problems = event.target.problems.value;
-      newClassi.mods = event.target.mods.value;
-      Meteor.call("addClassified", newClassi);
-      event.target.title.value="";
-    }
+let file = _getFileFromInput( options.event);
+_setPlaceholderText('Uploading ' + file.name + '...');
 
-  });
+_uploadFileToAmazonS3(file, options.parent, options.followup);
 
-  //ClassifiedShow
-  Template.ClassifiedShow.helpers({
-    isClassifiedOwner: function () {
-      return this.owner === Meteor.userId();
-    }
-    ,offers : function() {
-      //if seller
-      if(this.owner === Meteor.userId()){
-        //look to see who's selected (if anyone)
-        //return only offers between seller & selected
+};
 
-      } else {
+
+Modules.client.uploadToAmazonS3 = upload;
+
+
+//Subscriptions
+Meteor.subscribe("classifieds");
+Meteor.subscribe('offers');
+Meteor.subscribe('images');
+
+//Uploader
+Template.GeneralClassiUploader.events({
+'change input[type="file"]' (event, template){
+Modules.client.uploadToAmazonS3({event: event, template: template, parent: this._id, followup:  'addImageToClassified'});
+}
+});
+
+
+
+
+//Classified Fields
+Template.classifiedFields.helpers({
+adTypeSelected: function(val, selopt){
+
+return val === selopt ? {selected: 'selected'}
+: '' ;
+}
+});
+//EditClassifiedForm
+Template.editClassifiedForm.events({
+"submit .classified-fields": function(event) {
+event.preventDefault();
+var deltaClassi = {};
+deltaClassi.title = event.target.title.value;
+deltaClassi.posted = event.target.posted.checked;
+deltaClassi.asking = event.target.asking.value;
+deltaClassi.adType = event.target.adType.value;
+deltaClassi.willship = event.target.willship.checked;
+deltaClassi.shiprestric = event.target.shiprestric.value;
+deltaClassi.desc = event.target.desc.value;
+deltaClassi.problems = event.target.problems.value;
+deltaClassi.mods = event.target.mods.value;
+Meteor.call("updateClassified",this._id, deltaClassi);
+},
+"click .delete-button" : function(){
+Meteor.call("deleteClassified", this._id);
+}
+});
+
+//NewClassifiedForm
+Template.newClassifiedForm.events({
+"submit .classified-fields" : function(event){
+event.preventDefault();
+var newClassi = {};
+newClassi.title = event.target.title.value;
+newClassi.posted = event.target.posted.checked;
+newClassi.adType = event.target.adType.value;
+newClassi.asking = event.target.asking.value;
+newClassi.willship = event.target.willship.checked;
+newClassi.shiprestric = event.target.shiprestric.value;
+newClassi.desc = event.target.desc.value;
+newClassi.problems = event.target.problems.value;
+newClassi.mods = event.target.mods.value;
+Meteor.call("addClassified", newClassi);
+event.target.title.value="";
+}
+
+});
+//ClassifiedStub
+Template.ClassifiedStub.helpers({
+firstImage: function(){
+return this.images[0] || "";
+}
+});
+
+//ClassifiedDetailView
+Template.ClassifiedDetailView.helpers({
+firstImage: function(){
+return this.images[0] || "";
+}
+});
+//ClassifiedShow
+Template.ClassifiedShow.helpers({
+isClassifiedOwner: function () {
+return this.owner === Meteor.userId();
+}
+,offers : function() {
+//if seller
+if(this.owner === Meteor.userId()){
+//look to see who's selected (if anyone)
+             //return only offers between seller & selected
+
+            } else {
         //else just return them all
         return Offers.find({classi: this._id});
       }
@@ -349,6 +379,7 @@ if (Meteor.isClient) {
     }
   });
 
+ 
   //AccountsUI
   Accounts.ui.config({
     passwordSignupFields: "USERNAME_ONLY"

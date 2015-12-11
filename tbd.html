@@ -29,26 +29,49 @@
 
 <!--Classifieds-->
 
-<template name="allClassifieds">
-  <h2>Browse Classifieds</h2>
+<template name="ClassifiedsStubList">
   <ul>
     {{#each classifieds}}
-    {{> classifiedStub}}
+    {{> ClassifiedStub}}
     {{/each}}
   </ul>
+</template>
+
+<template name="allClassifieds">
+  <h2>Browse Classifieds </h2>
+  <h3>
+    {{#linkTo route='classifieds.cars'}}Just Cars{{/linkTo}}
+    {{#linkTo route='classifieds.parts'}}Just Parts{{/linkTo}}
+  </h3>
+  {{> ClassifiedsStubList}}
+</template>
+
+<template name="CarClassifieds">
+  <h2>Browse Car Classifieds</h2>
+  <h3>
+    {{#linkTo route='classifieds'}}Cars & Parts{{/linkTo}}
+    {{#linkTo route='classifieds.parts'}}Just Parts{{/linkTo}}
+  </h3>
+  {{> ClassifiedsStubList}}
+</template>
+
+<template name="PartClassifieds">
+  <h2>Browse Part Classifieds</h2>
+  <h3>
+    {{#linkTo route='classifieds'}}Cars & Parts{{/linkTo}}
+    {{#linkTo route='classifieds.cars'}}Just Cars{{/linkTo}}
+  </h3>
+  {{> ClassifiedsStubList}}
 </template>
 
 <template name="ClassifiedsMine">
   <h2>My Classifieds</h2>
   <ul>
     {{#each classifieds}}
-    {{> classifiedStub}}
+    {{> ClassifiedStub}}
     {{/each}}
   </ul>
 </template>
-
-
-
 
 <template name="ClassifiedNew">
   {{#if currentUser}}
@@ -60,37 +83,38 @@
 
 <template name="ClassifiedEdit">
   {{>editClassifiedForm}}
-  {{>upload}}
+  {{>GeneralClassiUploader}}
   {{>ClassifiedImagesShow}}
 </template>
 
 <template name="ClassifiedImagesShow">
   <h4>Images</h4>
-
   {{#each images}}
   {{>ClassiImageShow}}
   {{/each}}
 </template>
 
-<template name="ClassiImageShow">
+<Template name="ClassiImageShow">
   <img src="{{imageUrlForImageId}}" alt="{{imageUrlForImageId}}" >
   <button class="delete-image-button"> Remove This Image </button>
 </template>
 
-<template name="upload">
-  <h4 class="page-header">Upload a File to Amazon S3</h4>
-  {{> uploader}}
-</template>
 
-<template name="uploader">
-  <div class="upload-area">
+
+<template name="GeneralClassiUploader">
     <form id="upload">
-      <p class="alert alert-success text-center">
-        <span>Click or Drag a File Here to Upload</span>
+      <div class="upload-images">
+        <h5>Upload Image</h5>
+        <p>The image at the top of this list will be the one that
+          shows up when your ad is displayed in a list.</p>
+        <div class="alert alert-success">
+          <span>Pick a file..</span>
+        </div>
+        
         <input type="file">
-      </p>
+      </div>
+      
     </form>
-  </div>
 </template>
 
 <template name="ClassifiedShow">
@@ -130,6 +154,8 @@
 
 <template name="ClassifiedDetailView">
   <h2>{{title}} - ${{asking}}</h2>
+  <h5>Type: {{adType}}</h5>
+  <img src="{{firstImage}}">
   <h3>posted by {{username}} : {{#if posted}}posted{{/if}}</h3>
   <p>{{desc}}</p>
   <h4>Known Issues</h4>
@@ -149,7 +175,6 @@
   {{/each}}
   
 </template>
-
 
 <template name="editClassifiedForm">
   <div class="edit-classi-view">
@@ -180,11 +205,10 @@
   <label>
     What are you selling?
   <br>
-    <select name="adtype"
-            value="{{adtype}}"
-            class="adtype-input">
-      <option value="car">Car</option>
-      <option value="part">Part</option>
+  <select name="adType"
+          class="adtype-input">
+      <option value="car" {{adTypeSelected "car" adType}} >Car</option>
+      <option value="part" {{adTypeSelected "part" adType}}>Part</option>
     </select>
   </label>
   <br>
@@ -286,11 +310,16 @@
   </form>
 </template>
 
-<template name="classifiedStub">
+<template name="ClassifiedStub">
   <li>
-    <a href="{{pathFor route='classified.show'}}">
-      {{title}}
-    </a>
+    <div class="classified-stub">
+      <h4>
+        <a href="{{pathFor route='classified.show'}}">
+          {{title}} - ${{asking}}
+        </a>
+      </h4>
+      <img class="classified-stub-image" src="{{firstImage}}">
+    </div>
   </li>
 </template>
 
