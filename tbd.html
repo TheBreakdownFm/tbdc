@@ -83,9 +83,16 @@
 
 <template name="ClassifiedEdit">
   {{>editClassifiedForm}}
+</template>
+
+<template name="ClassifiedEditImages">
+  <button class="images-done-button">
+    Done
+  </button>
   {{>GeneralClassiUploader}}
   {{>ClassifiedImagesShow}}
 </template>
+
 
 <template name="ClassifiedImagesShow">
   <h4>Images</h4>
@@ -104,7 +111,6 @@
 <template name="GeneralClassiUploader">
     <form id="upload">
       <div class="upload-images">
-        <h5>Upload Image</h5>
         <p>The image at the top of this list will be the one that
           shows up when your ad is displayed in a list.</p>
         <div class="alert alert-success">
@@ -182,9 +188,9 @@
     <div class="classi-builder">
       <form class="classified-fields">
         {{> classifiedFields}}
-        <button class="save-button">Save</button>
+        <button class="save-button">Done here, now on to images.</button>
       </form>
-      <button class="delete-button">Delete</button>
+      <button class="delete-button">Delete this whole thing!</button>
     </div>
     <!--<div class="classi-preview">-->
     <!--<h2>Live Preview</h2>-->
@@ -306,7 +312,7 @@
 <template name="newClassifiedForm">
   <form class="classified-fields">
     {{> classifiedFields}}
-    <button class="save-button">Create</button>
+    <button class="save-button">Done here, now time for images.</button>
   </form>
 </template>
 
@@ -318,6 +324,7 @@
           {{title}} - ${{asking}}
         </a>
       </h4>
+      <h5>{{adType}}</h5>
       <img class="classified-stub-image" src="{{firstImage}}">
     </div>
   </li>
