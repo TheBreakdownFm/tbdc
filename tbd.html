@@ -2,65 +2,97 @@
 
 <!--Layout Templates-->
 <template name="ApplicationLayout">
-  <header>
-    <h1>TBD.FM</h1>
-    <Nav>
-      {{> loginButtons }}
-      {{#linkTo route='classifieds'}}Browse Classifieds{{/linkTo}}
-      {{#if currentUser}}
-      {{#linkTo route='classifieds.mine'}}My Ads{{/linkTo}}
-      {{#linkTo route='classified.new'}}Post a new Ad{{/linkTo}}
-      {{/if}}
-    </Nav>
+  <div class="container">
+    <div class="navbar navbar-default" role="navigation">
+      <div class="navbar-header">
+        <a class="navbar-brand" href="#">TheBreakdown.fm</a>
+        <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+      </div>
+      <div class="navbar-collapse collapse">
+        <ul class="nav navbar-nav">
+            <li>{{#linkTo route='classifieds'}}Classifieds{{/linkTo}}</li>
+            {{#if currentUser}}
+            <li>{{#linkTo route='classifieds.mine'}}My Ads{{/linkTo}}</li>
+            <li>{{#linkTo route='classified.new'}}Post a new Ad{{/linkTo}}</li>
+            {{/if}}
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          {{> loginButtons}} <!-- here -->
+        </ul>
+      </div>
+    </div>
+    <!--
+        <header>
+          <h1>TBD.FM</h1>
+          <Nav>
+            {{> loginButtons }}
+            {{#linkTo route='classifieds'}}Browse Classifieds{{/linkTo}}
+            {{#if currentUser}}
+            {{#linkTo route='classifieds.mine'}}My Ads{{/linkTo}}
+            {{#linkTo route='classified.new'}}Post a new Ad{{/linkTo}}
+            {{/if}}
+          </Nav>
 
-  </header>
-  <aside>
-    {{> yield "aside"}}
-  </aside>
-  <article>
-    {{> yield}}
-  </article>
-  <footer>
-    {{> yield "footer"}}
-  </footer>
+        </header>
+        -->
+
+    <aside>
+      {{> yield "aside"}}
+    </aside>
+    <article>
+      {{> yield}}
+    </article>
+    <footer>
+      {{> yield "footer"}}
+    </footer>
+  </div>
 </template>
 
 <!--Route Templates-->
 
 <!--Classifieds-->
 
+
 <template name="ClassifiedsStubList">
-  <ul>
-    {{#each classifieds}}
-    {{> ClassifiedStub}}
-    {{/each}}
-  </ul>
+  <div class="classi-stub-list">
+    <ul>
+      {{#each classifieds}}
+      {{> ClassifiedStub}}
+      {{/each}}
+    </ul>
+  </div>
 </template>
 
 <template name="allClassifieds">
-  <h2>Browse Classifieds </h2>
-  <h3>
+  <h2>Classifieds - Everything</h2>
+  <nav>
     {{#linkTo route='classifieds.cars'}}Just Cars{{/linkTo}}
     {{#linkTo route='classifieds.parts'}}Just Parts{{/linkTo}}
-  </h3>
+  </nav>
+
   {{> ClassifiedsStubList}}
 </template>
 
 <template name="CarClassifieds">
-  <h2>Browse Car Classifieds</h2>
-  <h3>
-    {{#linkTo route='classifieds'}}Cars & Parts{{/linkTo}}
+  <h2>Classifieds - Cars</h2>
+  <nav>
+    {{#linkTo route='classifieds'}}Everything{{/linkTo}}
     {{#linkTo route='classifieds.parts'}}Just Parts{{/linkTo}}
-  </h3>
+  </nav>
   {{> ClassifiedsStubList}}
 </template>
 
 <template name="PartClassifieds">
-  <h2>Browse Part Classifieds</h2>
-  <h3>
-    {{#linkTo route='classifieds'}}Cars & Parts{{/linkTo}}
+  <h2>Classifieds - Parts</h2>
+  <nav>
+    {{#linkTo route='classifieds'}}Everything{{/linkTo}}
     {{#linkTo route='classifieds.cars'}}Just Cars{{/linkTo}}
-  </h3>
+  </nav>
   {{> ClassifiedsStubList}}
 </template>
 
@@ -95,10 +127,12 @@
 
 
 <template name="ClassifiedImagesShow">
-  <h4>Images</h4>
-  {{#each images}}
-  {{>ClassiImageShow}}
-  {{/each}}
+  <div class="classi-images">
+    <h4>Images</h4>
+    {{#each images}}
+    {{>ClassiImageShow}}
+    {{/each}}
+  </div>
 </template>
 
 <Template name="ClassiImageShow">
@@ -109,18 +143,18 @@
 
 
 <template name="GeneralClassiUploader">
-    <form id="upload">
-      <div class="upload-images">
-        <p>The image at the top of this list will be the one that
-          shows up when your ad is displayed in a list.</p>
-        <div class="alert alert-success">
-          <span>Pick a file..</span>
-        </div>
-        
-        <input type="file">
+  <form id="upload">
+    <div class="upload-images">
+      <p>The image at the top of this list will be the one that
+        shows up when your ad is displayed in a list.</p>
+      <div class="alert alert-success">
+        <span>Pick a file..</span>
       </div>
-      
-    </form>
+
+      <input type="file">
+    </div>
+
+  </form>
 </template>
 
 <template name="ClassifiedShow">
@@ -159,7 +193,7 @@
 </template>
 
 <template name="ClassifiedDetailView">
-  <h2>{{title}} - ${{asking}}</h2>
+  <h2>{{title}} - {{formatusd asking}} - Created {{reldate createdAt}}</h2>
   <h5>Type: {{adType}}</h5>
   <img src="{{firstImage}}">
   <h3>posted by {{username}} : {{#if posted}}posted{{/if}}</h3>
@@ -179,16 +213,16 @@
   {{#each image in images}}
   <img src="{{image}}">
   {{/each}}
-  
+
 </template>
 
 <template name="editClassifiedForm">
   <div class="edit-classi-view">
-    <h2>Edit this shit</h2>
+    <h2>Edit ad created {{reldate createdAt}}</h2>
     <div class="classi-builder">
       <form class="classified-fields">
-        {{> classifiedFields}}
-        <button class="save-button">Done here, now on to images.</button>
+        {{> ClassifiedFields}}
+        <button class="save-button btn btn-primary">Done here, now on to images.</button>
       </form>
       <button class="delete-button">Delete this whole thing!</button>
     </div>
@@ -199,119 +233,134 @@
   </div>
 </template>
 
-<template name="classifiedFields">
-  <label>
-    Title
-  <br>
-    <input type="text"
-           name="title" value="{{title}}" placeholder="Title this item"
-           />
-  </label>
-  <br>
-  <label>
-    What are you selling?
-  <br>
-  <select name="adType"
-          class="adtype-input">
-      <option value="car" {{adTypeSelected "car" adType}} >Car</option>
-      <option value="part" {{adTypeSelected "part" adType}}>Part</option>
-    </select>
-  </label>
-  <br>
-  <label>
-    Posted
-    <input type="checkbox"
-           name="posted"
-           checked="{{posted}}"
-           class="toggle-posted"/>
-  </label>
-  <br>
-  <label>
-    Asking Price
-  <br>
-    <input type="number"
-           name="asking"
-           value="{{asking}}"
-           class="asking-input" />
-  </label>
-  <br>
-  <label>
-    Willing to Ship?
-    <input type="checkbox"
-           name="willship"
-           checked="{{willship}}"
-           class="toggle-willship"/>
-  </label>
-  <br>
-  <label>
-    Shipping Restrictions
-  <br>
-    <textarea name="shiprestric"
-              value="{{shiprestric}}"
-              placeholder="Describe any special conditions for shipping
-                           here..."></textarea>
-  </label>
-  <br>
 
-  <label>
-    Description
-    <br>
-    <textarea name="desc" value="{{desc}}" placeholder="Describe the item here..."></textarea>
-  </label>
-  <br>
-
-  <label>
-    Known Problems
-    <br>
-    <textarea name="problems" value="{{problems}}" placeholder="Describe
-                                                               any known issues
-                                                               here..."></textarea>
-  </label>
-  <br>
-
-  
-  <label>
-    Mods
-    <br>
-    <textarea name="mods" value="{{mods}}" placeholder="Describe any
-                                                        modifications
-                                                        that have been
-                                                        done here
-                                                        ..."></textarea>
-  </label>
-  <br>
+<template name="ClassifiedFields">
+  <div class="form-group">
+    <label>
+      Title
+      <input type="text" class="form-control"
+             name="title" value="{{title}}" placeholder="Title this item"
+             />
+    </label>
+  </div>
+  <div class="form-group">
+    <label>
+      What are you selling?
+      <select name="adType"
+              class="adtype-input form-control">
+        <option value="car" {{adTypeSelected "car" adType}} >Car</option>
+        <option value="part" {{adTypeSelected "part" adType}}>Part</option>
+      </select>
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox"
+             name="posted"
+             checked="{{posted}}"
+             class="toggle-posted"/>
+      Posted
+    </label>
+  </div>
+  <div class="form-group">
+    <label>
+      Asking Price
+      <input type="number"
+             name="asking"
+             value="{{asking}}"
+             class="asking-input form-control" />
+    </label>
+  </div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox"
+             name="willship"
+             checked="{{willship}}"
+             class="toggle-willship"/>
+      Willing to Ship?
+    </label>
+  </div>
+  {{#if isShippy}}
+  {{> ShippyFields}}
+  {{/if}}
+  <div class="form-group">
+    <label>
+      Description
+      <textarea name="desc"
+                class="form-control"
+                value="{{desc}}"
+                placeholder="Describe the item here..."></textarea>
+    </label>
+  </div>
+  {{#if isCar}}
+  <div class="form-group">
+    <label>
+      Known Problems
+      <textarea name="problems"
+                class="form-control"
+                value="{{problems}}"
+                placeholder="Describe any known issues here..."></textarea>
+    </label>
+  </div>
+  <div class="form-group">
+    <label>
+      Mods
+      <textarea name="mods"
+                value="{{mods}}"
+                class="form-control"
+                placeholder="Describe modifications
+                             that have been
+                             done here
+                             ..."></textarea>
+    </label>
+  </div>
+  {{/if}}
   <!-- Not yet implemented fields -->
-<!--
-  <label>
-    Trades Considered?
-    <input type="checkbox"
-           name="fortrade"
-           value="{{fortrade}}"
-           class="toggle-fortrade"/>
-  </label>
-  <br>
-  <label>
-    Trade Looking For?
-  <br>    
-    <textarea name="tradelookingfor"
-              class="tradelookingfor"
-              value="{{tradelookingfor}}"
-              placeholder="Description or key words that you're looking
-                           for in trade"></textarea>
-  </label>
-  <br>
-  <label>
-    SKU
+  <!--
+      <label>
+        Trades Considered?
+        <input type="checkbox"
+               name="fortrade"
+               value="{{fortrade}}"
+               class="toggle-fortrade"/>
+      </label>
       <br>
-    <input type="text" name="sku" value="{{sku}}" class="sku-input"/>
-  </label>
-  -->
+      <label>
+        Trade Looking For?
+        <br>
+        <textarea name="tradelookingfor"
+                  class="tradelookingfor"
+                  value="{{tradelookingfor}}"
+                  placeholder="Description or key words that you're looking
+                               for in trade"></textarea>
+      </label>
+      <br>
+      <label>
+        SKU
+        <br>
+        <input type="text" name="sku" value="{{sku}}" class="sku-input"/>
+      </label>
+      -->
 
 </template>
 
+<template name="ShippyFields">
+  <div class="form-group">
+    <label>
+      Shipping Restrictions
+      <textarea name="shiprestric"
+                class="form-control"
+                value="{{shiprestric}}"
+                placeholder="Describe any special conditions for
+                             shipping here..."></textarea>
+    </label>
+  </div>
+</template>
+
+
 <template name="newClassifiedForm">
   <form class="classified-fields">
-    {{> classifiedFields}}
+    {{> ClassifiedFields}}
     <button class="save-button">Done here, now time for images.</button>
   </form>
 </template>
@@ -321,7 +370,7 @@
     <div class="classified-stub">
       <h4>
         <a href="{{pathFor route='classified.show'}}">
-          {{title}} - ${{asking}}
+          {{title}} - {{formatusd asking}} - Created {{reldate createdAt}}
         </a>
       </h4>
       <h5>{{adType}}</h5>
@@ -362,11 +411,12 @@
   <div>
     {{#if isSender}}
     <h2>Offer from You of ${{amnt}}</h2>
+    {{reldate createdAt}}<br>
     You Offered: {{amnt}} <br>
     You Said: {{msg}}<br>
     {{else}}
     <h2>Offer from {{createdByUname}} of ${{amnt}} </h2>
-    Timestamp: {{createdAt}}<br>
+    {{reldate createdAt}}<br>
     They Offered: {{amnt}}<br>
     They Said: {{msg}}<br>
     {{#if okToCounter}}
