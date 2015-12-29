@@ -2,8 +2,7 @@
 
 <!--Layout Templates-->
 <template name="ApplicationLayout">
-  <div class="container">
-    <div class="navbar navbar-default" role="navigation">
+    <div class="navbar navbar-inverse  navbar-static-top" role="navigation">
       <div class="navbar-header">
         <a class="navbar-brand" href="#">TheBreakdown.fm</a>
         <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
@@ -26,27 +25,12 @@
         </ul>
       </div>
     </div>
-    <!--
-        <header>
-          <h1>TBD.FM</h1>
-          <Nav>
-            {{> loginButtons }}
-            {{#linkTo route='classifieds'}}Browse Classifieds{{/linkTo}}
-            {{#if currentUser}}
-            {{#linkTo route='classifieds.mine'}}My Ads{{/linkTo}}
-            {{#linkTo route='classified.new'}}Post a new Ad{{/linkTo}}
-            {{/if}}
-          </Nav>
-
-        </header>
-        -->
-
+  <div class="container">
     <aside>
       {{> yield "aside"}}
     </aside>
-    <article>
       {{> yield}}
-    </article>
+
     <footer>
       {{> yield "footer"}}
     </footer>
@@ -60,11 +44,9 @@
 
 <template name="ClassifiedsStubList">
   <div class="classi-stub-list">
-    <ul>
       {{#each classifieds}}
       {{> ClassifiedStub}}
       {{/each}}
-    </ul>
   </div>
 </template>
 
@@ -98,11 +80,9 @@
 
 <template name="ClassifiedsMine">
   <h2>My Classifieds</h2>
-  <ul>
     {{#each classifieds}}
     {{> ClassifiedStub}}
     {{/each}}
-  </ul>
 </template>
 
 <template name="ClassifiedNew">
@@ -168,7 +148,7 @@
     {{else}}
     {{#if okMakeNewOffer}}
     {{> OfferNew}}
-    tesmade by test 2                {{/if}}
+    {{/if}}
     {{/if}}
     {{#if currentUser}}
     {{> OffersView}}
@@ -366,17 +346,19 @@
 </template>
 
 <template name="ClassifiedStub">
-  <li>
-    <div class="classified-stub">
+  <div class="classified-stub row well">
+    <div class="col-sm-12 col-md-6">
       <h4>
         <a href="{{pathFor route='classified.show'}}">
           {{title}} - {{formatusd asking}} - Created {{reldate createdAt}}
         </a>
       </h4>
       <h5>{{adType}}</h5>
-      <img class="classified-stub-image" src="{{firstImage}}">
     </div>
-  </li>
+    <div class="col-xs-6">
+            <img class="classified-stub-image" src="{{firstImage}}">
+    </div>
+  </div>
 </template>
 
 <!--Offer Templates-->
