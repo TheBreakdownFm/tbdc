@@ -224,7 +224,7 @@
         {{> ClassifiedFields}}
         <button class="save-button btn btn-primary">Done here, now on to images.</button>
       </form>
-      <button class="delete-button">Delete this whole thing!</button>
+      <button class="delete-button btn">Delete this whole thing!</button>
     </div>
     <!--<div class="classi-preview">-->
     <!--<h2>Live Preview</h2>-->
@@ -361,8 +361,8 @@
 <template name="newClassifiedForm">
   <form class="classified-fields">
     {{> ClassifiedFields}}
-    <button class="save-button">Done here, now time for images.</button>
-  </form>
+    <button class="save-button btn">Done here, now time for images.</button>
+  </form> 
 </template>
 
 <template name="ClassifiedStub">
@@ -382,12 +382,20 @@
 <!--Offer Templates-->
 
 <template name="OfferNew">
+  <div class="new-offer-form">
   <form class="new-offer-form">
-    <input type="number" name="amnt" value="{{amnt}}" placeholder="Offer Amount"/>
-    <input type="text" name="msg" value="{{msg}}" placeholder="Message, be nice."/>
-    <button class="new-offer-button">#dealwithit</button>
+    <div class="form-group">
+    <input type="number" class="form-control"  name="amnt" value="{{amnt}}"
+           placeholder="Offer Amount"/>
+    </div>
+    <div class="form-group">
+    <input type="text" name="msg" class="form-control" value="{{msg}}"
+           placeholder="Message, be nice."/>
+    </div>
+    <button class="btn new-offer-button">#dealwithit</button>
   </form>
-</template>
+  </div>
+i can haz?</template>
 
 <template name="OffersView">
   {{#each offersForClassi}}
@@ -421,11 +429,19 @@
     They Said: {{msg}}<br>
     {{#if okToCounter}}
     <form class="counter-offer-form">
-      <input type="number" name="amnt" value="{{amnt}}" placeholder="Offer Amount"/>
-      <input type="text" name="msg" value="{{msg}}" placeholder="Message, be nice."/>
-      <button class="make-counter-offer">How about...</button>
+      <div class="form-group">
+        <input type="number" name="amnt" value="{{amnt}}"
+               class="form-control"
+             placeholder="Offer Amount"/>
+      </div>
+      <div class="formm-group">
+        <input type="text" name="msg" value="{{msg}}"
+               class="form-control"
+             placeholder="Message, be nice."/>
+      </div>
+      <button class="btn make-counter-offer">How about...</button>
     </form>
-    <button class="accept-offer-button">
+    <button class="btn accept-offer-button">
       Deal!
     </button>
     {{/if}}
