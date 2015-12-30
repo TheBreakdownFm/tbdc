@@ -330,6 +330,14 @@ if (Meteor.isClient) {
         }
     });
 
+    Template.ClassifiedStub.events({
+        "click .classified-stub" : function(event) {
+            Router.go('classified.show', {_id: this._id});
+        }
+    });
+                                   
+                                   
+
     //ClassifiedDetailView
     Template.ClassifiedDetailView.helpers({
         firstImage: function(){
@@ -425,6 +433,30 @@ if (Meteor.isClient) {
         }
         ,okToCounter: function() {
             return this.status !== 'accepted' && this.status !== 'declined';
+        }
+        ,statusClass: function() {
+            let retclass = '';
+            if(this.status === 'accepted'){
+                retclass = 'bg-success';
+            } else if(this.status === 'pending') {
+                retclass = 'bg-warning';
+            } else if(this.status === 'declined') {
+                retclass = 'bg-danger';
+            }
+            return retclass; 
+        }
+        ,statusMsg: function() {
+
+            let retclass = '';
+            if(this.status === 'accepted'){
+                retclass = 'Accepted';
+            } else if(this.status === 'pending') {
+                retclass = 'Haven\'t Responded';
+            } else if(this.status === 'declined') {
+                retclass = 'Declined';
+            }
+            return retclass; 
+
         }
     });
 
