@@ -42,6 +42,10 @@
 <!--Classifieds-->
 
 
+<template name="Home">
+    <h1>Welcome to The Breakdown. A place with some car shit. </h1>
+</template>
+
 <template name="ClassifiedsStubList">
   <div class="classi-stub-list">
     {{#each classifieds}}
@@ -110,7 +114,7 @@
   <div class="classi-images">
     <h4>Images</h4>
     {{#each images}}
-    {{>ClassiImageShow}}
+    {{> ClassiImageShow}}
     {{/each}}
   </div>
 </template>
@@ -463,7 +467,7 @@
         <p>
           This ad is accepting offers. Send one.
         </p>
-        <form class="new-offer-form">
+        <form class="new-offer-form" id="newOfferForm">
           <div class="form-group">
             <label>Offer Amount</label>
 
@@ -476,17 +480,20 @@
             <input type="text" name="msg" class="form-control" value="{{msg}}"
                    placeholder="Message, be nice."/>
           </div>
-          <p class="text-center">
-            <button class="btn new-offer-button btn-lg btn-success">Send
-              Offer</button>
-          </p>
         </form>
+          <p class="text-center">
+              <button type="submit" form="newOfferForm" class="btn new-offer-button btn-lg btn-success">Send
+                  Offer</button>
+          </p>
       </div>
     </div>
   </div>
 </template>
 
 <template name="OffersView">
+    {{#each buyersFromOffers}}
+        {{this}}<br/>
+    {{/each}}
   {{#each offersForClassi}}
   {{> OfferShow}}
   {{/each}}

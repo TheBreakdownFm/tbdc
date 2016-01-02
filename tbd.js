@@ -116,7 +116,7 @@ Router.route('/classified/:_id/edit', function(){
 Router.route('classifieds/:_id/edit/images', function(){
     this.render('ClassifiedEditImages', {
         data: function() {
-            return Classifieds.findOne({_id: this.params._id})
+            return Classifieds.findOne({_id: this.params._id});
         }
     });
 },{
@@ -131,7 +131,7 @@ if (Meteor.isServer) {
         key: Meteor.settings.AWSAccessKeyId,
         secret: Meteor.settings.AWSSecretAccessKey,
         bucket: 'tbdc-photo'
-    }
+    };
 
     //Publish Rules
     Meteor.publish('images', function() {
@@ -183,7 +183,7 @@ if (Meteor.isClient) {
 
     let _setPlaceholderText = ( string = "Upload a file!" ) => {
         template.find( ".alert span" ).innerText = string;
-    }
+    };
     
     let _uploadFileToAmazonS3 = ( file, parent, followup ) => {
         //TODO make underscore each
@@ -197,21 +197,18 @@ if (Meteor.isClient) {
             console.log('it worked?' + result.url);
             Meteor.call(followup, parent, result.url);
         });
-    }
+    };
 
-    let upload = function(options) {
+    Modules.client.uploadToAmazonS3 = function (options) {
         template = options.template;
 
 
-        let file = _getFileFromInput( options.event);
+        let file = _getFileFromInput(options.event);
         _setPlaceholderText('Uploading ' + file.name + '...');
 
         _uploadFileToAmazonS3(file, options.parent, options.followup);
 
     };
-
-
-    Modules.client.uploadToAmazonS3 = upload;
 
 
     //Subscriptions
@@ -221,7 +218,7 @@ if (Meteor.isClient) {
 
     //Uploader
     Template.GeneralClassiUploader.events({
-        'change input[type="file"]' (event, template){
+        'change input[type="file"]' : function(event, template){
             Modules.client.uploadToAmazonS3({event: event, template: template, parent: this._id, followup:  'addImageToClassified'});
         }
     });
@@ -243,7 +240,7 @@ if (Meteor.isClient) {
             return val === selopt ? {selected: 'selected'}
             : '' ;
         }
-        ,isCar: ()=>{
+        ,isCar: function(){
             let cv = Template.instance().state.get('adtype');
             return cv != null ? cv === 'car' : this.adtype === 'car' || true;
         }
@@ -253,13 +250,14 @@ if (Meteor.isClient) {
         }
       
     });
+
     Template.ClassifiedFields.events({
         "change .toggle-willship" : function(event, tmpl){
             tmpl.state.set('willship', event.target.checked);
         },
-        "change .adtype-input" : (event, tmpl)=>{
+        "change .adtype-input" : function(event, tmpl){
             tmpl.state.set('adtype', event.target.value);
-        },
+        }
     });
 
     //EditClassifiedForm
@@ -286,6 +284,9 @@ if (Meteor.isClient) {
         },
         "click .delete-button" : function(){
             Meteor.call("deleteClassified", this._id);
+        }
+        ,"click .cancel-edit-classi-button" : function(){
+            Router.go('classified.show', {_id: this._id});
         }
     });
 
@@ -359,20 +360,19 @@ if (Meteor.isClient) {
                 //else just return them all
                 return Offers.find({classi: this._id});
             }
-
-
         }
         ,buyersWithOffersIn: function(){
             return Offers.find({classi: this._id,});
         }
         ,okMakeNewOffer : function() {
-            return Meteor.userId() && Offers.find({
+            let okmakeoffer = false;
+            okmakeoffer = this.owner !== Meteor.userId() && Meteor.userId() && Offers.find({
                 $or: [
                     {classi: this._id, status: 'accpeted'},
                     {classi: this._id, createdBy: Meteor.userId()}
                 ]
             }).count() == 0;
-
+            return okmakeoffer;
         }
     });
 
@@ -409,7 +409,9 @@ if (Meteor.isClient) {
             newOffer.amnt = event.target.amnt.value;
             newOffer.classi =  this._id;
             Meteor.call('addOffer', newOffer);
-        }
+            return false;
+            //TODO: not sure why this return false is needed here
+            /* http://stackoverflow.com/questions/18605963/touchend-event-triggers-twice-using-meteor */
     });
 
 
@@ -463,8 +465,14 @@ if (Meteor.isClient) {
     //OffersView
     Template.OffersView.helpers({
         offersForClassi: function(){
-            console.log(this._id);
             return Offers.find({classi: this._id});
+        }
+        ,buyersFromOffers: function(){
+            let offers = Offers.find({classi: this._id}).fetch();
+            console.log(offers);
+            let buyers = _.keys(_.groupBy(offers, 'createdByUname'));
+            console.log(buyers);
+            return buyers;
         }
     });
 
