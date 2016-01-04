@@ -190,16 +190,21 @@
       <h1 class="text-center">
         Action
       </h1>
-      {{#if okMakeNewOffer}}
-      {{> OfferNew}}
-      {{/if}}
+
 
 
       {{#if currentUser}}
-      {{> OffersView}}
+          {{#if isClassifiedOwner}}
+            {{> OffersView}}
+          {{else}}
+            {{>BuyerOffers}}
+          {{/if}}
       {{else}}
       {{> Yuno}}
       {{/if}}
+        {{#if okMakeNewOffer}}
+            {{> OfferNew}}
+        {{/if}}
     </div>
   </div>
 </template>
@@ -212,9 +217,106 @@
 </template>
 
 <template name="BuyerOffers">
-  {{#each offer}}
+  {{#each offersForClassi}}
   {{> OfferShow}}
   {{/each}}
+</template>
+
+
+<template name="OffersView">
+    {{#each offersThreadedByBuyer}}
+        {{> OfferThread}}
+        <hr/>
+    {{/each}}
+</template>
+
+<template name="OfferThread">
+    <h3 class="offer-thread-heading"> Offers From {{buyer}} <span class="badge">{{numOffers}}</span></h3>
+    {{#if collaspseStatus}}
+        {{#each offers}}
+            {{> OfferShow}}
+        {{/each}}
+    {{/if}}
+</template>
+
+<template name="OfferThreads">
+    {{#each thread}}
+        offer exists
+    {{/each}}
+</template>
+
+<template name="OfferShow">
+    <div class="row panel">
+        {{#if isSender}}
+
+            <div class="col-xs-12 {{statusClass}}">
+                <h3>
+                    <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
+                    You Offered
+                    {{formatusd amnt}}
+                    <br>
+                    <small>{{reldate createdAt}}</small>
+                </h3>
+            </div>
+
+            <div class="col-xs-12">
+                <p>Your Message:<br> {{msg}}</p>
+            </div>
+
+
+            <div class="col-xs-12">
+                <h3>Status: They {{statusMsg}}</h3>
+            </div>
+
+        {{else}}
+
+            <div class="col-xs-12 {{statusClass}}">
+                <h3>
+        <span class="glyphicon glyphicon-arrow-right"
+              aria-hidden="true"></span>
+                    {{createdByUname}} Offered
+                    {{formatusd amnt}}
+                    <br>
+                    <small>{{reldate createdAt}}</small>
+                </h3>
+            </div>
+            <div class="col-xs-12">
+                <p>They Said:<br> {{msg}}</p>
+            </div>
+
+            <div class="col-xs-12 ">
+                <h3>Status: You {{statusMsg}}</h3>
+            </div>
+
+            <div class="col-xs-12">
+                {{#if okToCounter}}
+                    <button class="btn btn-success accept-offer-button">
+        <span class="glyphicon glyphicon-arrow-ok"
+              aria-hidden="true"></span>
+                        Accept this Offer
+                    </button>
+                    <p class="text-center"> Or... </p>
+                    <form class="counter-offer-form">
+                        <div class="form-group">
+                            <label> Offer Amount</label>
+                            <input type="number" name="amnt" value=""
+                                   class="form-control"
+                                   placeholder="Offer Amount"/>
+                        </div>
+                        <div class="formm-group">
+                            <label> Message </label>
+                            <input type="text" name="msg" value="{{msg}}"
+                                   class="form-control"
+                                   placeholder="Message, be nice."/>
+                        </div>
+                        <button class="btn btn-primary make-counter-offer">Send
+                            Counter Offer</button>
+                    </form>
+
+                {{/if}}
+            </div>
+        {{/if}}
+    </div>
 </template>
 
 <template name="ClassifiedDetailView">
@@ -321,11 +423,11 @@
     </select>
   </div>
   <div class="checkbox">
+      <label>
     <input type="checkbox"
            name="posted"
            checked="{{posted}}"
            class="toggle-posted"/>
-    <label>
       Posted
     </label>
   </div>
@@ -339,11 +441,11 @@
            class="asking-input form-control" />
   </div>
   <div class="checkbox">
+      <label>
     <input type="checkbox"
            name="willship"
            checked="{{willship}}"
            class="toggle-willship"/>
-    <label>
       Willing to Ship?
     </label>
   </div>
@@ -490,100 +592,6 @@
   </div>
 </template>
 
-<template name="OffersView">
-    {{#each buyersFromOffers}}
-        {{this}}<br/>
-    {{/each}}
-  {{#each offersForClassi}}
-  {{> OfferShow}}
-  {{/each}}
-</template>
-
-<template name="OfferThread">
-  {{#each offer}}
-  offer
-  {{/each}}
-</template>
-
-<template name="OfferThreads">
-  {{#each thread}}
-  offer exists
-  {{/each}}
-</template>
-
-<template name="OfferShow">
-  <div class="row panel">
-    {{#if isSender}}
-
-    <div class="col-xs-12 {{statusClass}}">
-      <h3>
-        <span class="glyphicon glyphicon-arrow-left" aria-hidden="true"></span>
-        You Offered
-        {{formatusd amnt}}
-        <br>
-        <small>{{reldate createdAt}}</small>
-      </h3>
-    </div>
-    
-    <div class="col-xs-12">
-      <p>Your Message:<br> {{msg}}</p>
-    </div>
-
-    
-    <div class="col-xs-12">
-      <h3>Status: They {{statusMsg}}</h3>
-    </div>
-
-    {{else}}
-    
-    <div class="col-xs-12 {{statusClass}}">
-      <h3>
-        <span class="glyphicon glyphicon-arrow-right"
-              aria-hidden="true"></span>
-        {{createdByUname}} Offered
-        {{formatusd amnt}}
-        <br>
-        <small>{{reldate createdAt}}</small>
-      </h3>
-    </div>
-    <div class="col-xs-12">
-      <p>They Said:<br> {{msg}}</p>
-    </div>
-
-    <div class="col-xs-12 ">
-      <h3>Status: You {{statusMsg}}</h3>
-    </div>
-    
-    <div class="col-xs-12">
-      {{#if okToCounter}}
-      <button class="btn btn-success accept-offer-button">
-        <span class="glyphicon glyphicon-arrow-ok"
-              aria-hidden="true"></span>
-        Accept this Offer
-      </button>
-      <p class="text-center"> Or... </p>
-            <form class="counter-offer-form">
-        <div class="form-group">
-          <label> Offer Amount</label>
-          <input type="number" name="amnt" value=""
-                 class="form-control"
-                 placeholder="Offer Amount"/>
-        </div>
-        <div class="formm-group">
-          <label> Message </label>
-          <input type="text" name="msg" value="{{msg}}"
-                 class="form-control"
-                 placeholder="Message, be nice."/>
-        </div>
-        <button class="btn btn-primary make-counter-offer">Send
-        Counter Offer</button>
-      </form>
-
-      {{/if}}
-    </div>
-    {{/if}}
-  </div>
-</template>
 
 <template name="OfferSenderView">
 

@@ -368,8 +368,8 @@ if (Meteor.isClient) {
             let okmakeoffer = false;
             okmakeoffer = this.owner !== Meteor.userId() && Meteor.userId() && Offers.find({
                 $or: [
-                    {classi: this._id, status: 'accpeted'},
-                    {classi: this._id, createdBy: Meteor.userId()}
+                    {classi: this._id, status: 'accepted'},
+                    {classi: this._id, createdBy: Meteor.userId(), status: 'pending'}
                 ]
             }).count() == 0;
             return okmakeoffer;
@@ -407,11 +407,12 @@ if (Meteor.isClient) {
             var newOffer = {};
             newOffer.msg = event.target.msg.value;
             newOffer.amnt = event.target.amnt.value;
-            newOffer.classi =  this._id;
+            newOffer.classi = this._id;
             Meteor.call('addOffer', newOffer);
             return false;
             //TODO: not sure why this return false is needed here
             /* http://stackoverflow.com/questions/18605963/touchend-event-triggers-twice-using-meteor */
+        }
     });
 
 
@@ -462,18 +463,46 @@ if (Meteor.isClient) {
         }
     });
 
-    //OffersView
-    Template.OffersView.helpers({
-        offersForClassi: function(){
+
+
+    //BuyerOffers View
+    Template.BuyerOffers.helpers({
+        offersForClassi: function() {
             return Offers.find({classi: this._id});
         }
-        ,buyersFromOffers: function(){
+    })
+
+    //OffersView
+    Template.OffersView.helpers({
+        /*buyersFromOffers: function(){
             let offers = Offers.find({classi: this._id}).fetch();
-            console.log(offers);
             let buyers = _.keys(_.groupBy(offers, 'createdByUname'));
-            console.log(buyers);
             return buyers;
+        },*/
+        offersThreadedByBuyer: function(){
+            let offers = Offers.find( {classi: this._id} ).fetch();
+            let buyers = _.keys(_.groupBy(_.filter(offers, function (offy){
+                return offy.sender !== offy.classiOwnerId;
+            }), 'createdBy'));
+
+            console.log('Buyers: ' + buyers);
+            console.log('Offers: ' + offers);
+            let othreads = [];
+            _.each(buyers, function(el, index, list){
+                othreads[index] = {}
+                othreads[index].buyer = el;
+                othreads[index].offers = _.filter(offers, function(offer){
+                    return offer.sender === el || offer.recipient === el;
+                });
+                if(othreads[index].offers.length > 0){
+                    othreads[index].buyer = othreads[index].offers[0].createdByUname;
+                }
+            });
+            console.log('Threads: ' + othreads);
+            return othreads;
+
         }
+
     });
 
     //OfferThread
@@ -481,8 +510,24 @@ if (Meteor.isClient) {
         isClassiOwner: function() {
             return this.classId === Meteor.userId();
         }
+        ,collaspseStatus: function () {
+            return Template.instance().state.get('collapsed');
+        }
+        ,numOffers : function(){
+            return this.offers.length;
+        }
     });
 
+    Template.OfferThread.events({
+        "click .offer-thread-heading" : function(event, tmpl){
+            console.log('CLicked');
+            tmpl.state.set('collapsed', !Template.instance().state.get('collapsed'));
+        }
+    });
+    Template.OfferThread.onCreated(function() {
+        this.state = new ReactiveDict();
+        this.state.set('collapsed', false);
+    });
 
     //AccountsUI
     Accounts.ui.config({
