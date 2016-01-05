@@ -1,7 +1,7 @@
 {
   "modules" : {
     "normalize"            : true,
-    "print"                : false,
+    "print"                : true,
     "glyphicons"           : true,
 
     "scaffolding"          : true,

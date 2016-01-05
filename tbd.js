@@ -22,42 +22,61 @@ Router.route('/', function() {
 });
 
 //Routes/classifieds
+let _query_obj_from_filters = function(){
+    let qo = {};
+    qo.owner = {$ne: Meteor.userId()};
+    //If filters exist, set them
+    if(Session.get('classiFilters')){
+        let filters = Session.get('classiFilters');
+        //Check for filter exists
+        if(filters.adType && filters.adType !== 'all'){
+            if(filters.adType === 'car'){
+                qo.adType = 'car';
+            } else if(filters.adType === 'part'){
+                qo.adType = 'part';
+            } else {
+                throw new Meteor.Error('Bad-Filter');
+            }
+        }
+        //Build Price Range
+        if(filters.pricemin || filters.pricemax){
+            let minset = filters.pricemin !== undefined && filters.pricemin !== null && !isNaN(filters.pricemin) && filters.pricemin !== '';
+            let maxset = filters.pricemax !== undefined && filters.pricemax !== null && !isNaN(filters.pricemax) && filters.pricemax !== '';
+            if(minset && maxset){
+                qo.asking = {$gte: filters.pricemin, $lte: filters.pricemax};
+            } else if(minset && !maxset){
+                qo.asking = {$gte: filters.pricemin};
+            } else if(!minset && maxset) {
+                qo.asking = {$lte: filters.pricemax};
+            } else if(!minset && !maxset){
+                qo.asking = {$ne: null};
+            } else {
+                throw new Meteor.Error('Bad-filter');
+            }
+        }
+
+        //build keywords
+
+        if(filters.keywords && filters.keywords.length > 2){
+            qo.title = {$regex: '.*' + filters.keywords + '.*', $options: 'i'}
+        }
+    }
+    console.log(qo);
+    return qo;
+}
 
 Router.route('/classifieds/', function(){
     this.render('allClassifieds', {
         data:{
             classifieds: function() {
-                return Classifieds.find({owner: {$ne: Meteor.userId()}}, {sort: {createdAt: -1}})
+                return Classifieds.find(
+                    {owner: {$ne: Meteor.userId()}},
+                    {sort: {createdAt: -1}});
             }
         }
     });
 },{
     name: 'classifieds'
-});
-
-Router.route('/classifieds/cars', function(){
-    this.render('CarClassifieds', {
-        data: {
-            classifieds: function(){
-                return Classifieds.find({owner: {$ne: Meteor.userId()}, adType: 'car'}, {sort: {createdAt: -1}})
-            }
-        }
-    });
-},{
-    name: 'classifieds.cars'
-});
-
-
-Router.route('/classifieds/parts', function(){
-    this.render('PartClassifieds', {
-        data: {
-            classifieds: function(){
-                return Classifieds.find({owner: {$ne: Meteor.userId()}, adType: 'part'}, {sort: {createdAt: -1}})
-            }
-        }
-    });
-},{
-    name: 'classifieds.parts'
 });
 
 Router.route('/classifieds/mine', function(){
@@ -224,14 +243,81 @@ if (Meteor.isClient) {
     });
 
 
+    let _set_classi_filter = _.debounce(function(k, v){
+        console.log('Filters Before: ' + Session.get('classiFilters'));
+        let filters = Session.get('classiFilters');
+        if(filters == undefined){
+            filters = {};
+        }
+        filters[k] = v;
+        Session.set('classiFilters', filters);
+    }, 300, false);
+
+    Template.ClassifiedControl.events({
+        "click .filter-type-input-all" : function(){
+            _set_classi_filter('adType', 'all');
+        },
+        "click .filter-type-input-cars" : function(){
+            _set_classi_filter('adType', 'car');
+        },
+        "click .filter-type-input-parts" : function () {
+            _set_classi_filter('adType', 'part');
+        },
+        "keyup .filter-keyword-input" : function(event){
+           //todo: ESCAPE THIS SHIT
+            let filterkw = event.target.value;
+            _set_classi_filter('keywords',filterkw );
+        },
+        "keyup .filter-price-max-input" : function(event){
+             //todo: ESCAPE THIS SHIT
+            let pm = parseInt(event.target.value);
+            _set_classi_filter('pricemax', pm);
+        },
+        "keyup .filter-price-min-input" : function(event){
+            //todo: ESCAPE THIS SHIT
+            let pm = parseInt(event.target.value);
+            _set_classi_filter('pricemin',pm );
+        },
+        "submit .classi-filters" : function(event) {
+            event.preventDefault();
+            Session.set('classiFilters', {adType: 'all'});
+            console.log('Filters After: ' + JSON.stringify(Session.get('classiFilters')));
+            event.target.keywords.value = null;
+            event.target.pricemin.value = null;
+            event.target.pricemax.value = null;
+        }
+    });
 
 
-    
+    Template.allClassifieds.helpers({
+        filteredClassifieds: function(){
+            if(Session.get('classiFilters') !== undefined){
+                return Classifieds.find(
+                    _query_obj_from_filters(),
+                    {sort: {createdAt: -1}});
+            } else {
+            return Classifieds.find(
+                    {owner: {$ne: Meteor.userId()}},
+                    {sort: {createdAt: -1}});
+            }
+        }
+    });
+    Template.ClassifiedControl.helpers({
+        selectedAdType: function(intyp){
+            //todo: define this defualt behaivor elsewhrre?
+            if( Session.get('classiFilters') === undefined && intyp === 'all'){
+                return 'btn-primary';
+            } else if (Session.get('classiFilters') !== undefined && Session.get('classiFilters').adType === intyp) {
+                return 'btn-primary';
+            }
+        }
+    });
+
     //Classified Fields
     Template.ClassifiedFields.onCreated(function(){
         this.state = new ReactiveDict();
         this.state.set('willship', null);
-        this.state.set('adtype', null);
+        this.state.set('adType', null);
     });
 
     Template.ClassifiedFields.helpers({
@@ -241,8 +327,8 @@ if (Meteor.isClient) {
             : '' ;
         }
         ,isCar: function(){
-            let cv = Template.instance().state.get('adtype');
-            return cv != null ? cv === 'car' : this.adtype === 'car' || true;
+            let cv = Template.instance().state.get('adType');
+            return cv != null ? cv === 'car' : this.adType === 'car' || true;
         }
         ,isShippy: function() {
             let sv = Template.instance().state.get('willship');
@@ -255,8 +341,8 @@ if (Meteor.isClient) {
         "change .toggle-willship" : function(event, tmpl){
             tmpl.state.set('willship', event.target.checked);
         },
-        "change .adtype-input" : function(event, tmpl){
-            tmpl.state.set('adtype', event.target.value);
+        "change .adType-input" : function(event, tmpl){
+            tmpl.state.set('adType', event.target.value);
         }
     });
 
@@ -268,7 +354,7 @@ if (Meteor.isClient) {
             var deltaClassi = {};
             deltaClassi.title = event.target.title.value;
             deltaClassi.posted = event.target.posted.checked;
-            deltaClassi.asking = event.target.asking.value;
+            deltaClassi.asking = parseInt(event.target.asking.value);
             deltaClassi.adType = event.target.adType.value;
             deltaClassi.willship = event.target.willship.checked;
             if(event.target.willship.checked === true){
@@ -298,7 +384,7 @@ if (Meteor.isClient) {
             newClassi.title = event.target.title.value;
             newClassi.posted = event.target.posted.checked;
             newClassi.adType = event.target.adType.value;
-            newClassi.asking = event.target.asking.value;
+            newClassi.asking = parseInt(event.target.asking.value);
             newClassi.willship = event.target.willship.checked;
             if(event.target.willship.checked === true){
                 newClassi.shiprestric = event.target.shiprestric.value;
@@ -550,7 +636,7 @@ Meteor.methods({
         imageMeta.userId = Meteor.userId();
         imageMeta.createdAt = new Date();
         imageMeta.parent = parent || 'none';
-        return Images.insert(imageMeta, function(error, result){
+        return Images.insert(imageMeta, function(){
             if(result){
                 return result;
             }

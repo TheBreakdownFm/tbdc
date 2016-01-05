@@ -26,14 +26,8 @@
     </div>
   </div>
   <div class="container-fluid">
-    <aside>
-      {{> yield "aside"}}
-    </aside>
     {{> yield}}
 
-    <footer>
-      {{> yield "footer"}}
-    </footer>
   </div>
 </template>
 
@@ -46,40 +40,47 @@
     <h1>Welcome to The Breakdown. A place with some car shit. </h1>
 </template>
 
+<template name="ClassifiedControl">
+    <div class="row">
+        <div class="col-xs-12 well ">
+            <form class="form-inline classi-filters">
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-default filter-type-input-all {{selectedAdType "all"}}">All Ads</button>
+                    <button type="button" class="btn btn-default filter-type-input-cars  {{selectedAdType "car"}}">Just Cars</button>
+                    <button type="button" class="btn btn-default filter-type-input-parts  {{selectedAdType "part"}}">Just Parts</button>
+                </div>
+                <div class="form-group">
+                    <input type="text" name="keywords" class="form-control filter-keyword-input" placeholder="Filter Titles" value="{{Session.classiFilters.keywords}}">
+                </div>
+                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">$</span>
+                        <input type="number" name="pricemin" class="form-control filter-price-min-input" placeholder="Price Min">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <input type="number" name="pricemax" class="form-control filter-price-max-input" placeholder="Price Max">
+                </div>
+
+                <button class="btn btn-small btn-warning clear-filters-button">Clear Filters</button>
+            </form>
+        </div>
+    </div>
+</template>
+
 <template name="ClassifiedsStubList">
   <div class="classi-stub-list">
-    {{#each classifieds}}
-    {{> ClassifiedStub}}
-    {{/each}}
+
   </div>
 </template>
 
 <template name="allClassifieds">
-  <h2>Classifieds - Everything</h2>
-  <nav>
-    {{#linkTo route='classifieds.cars'}}Just Cars{{/linkTo}}
-    {{#linkTo route='classifieds.parts'}}Just Parts{{/linkTo}}
-  </nav>
-
-  {{> ClassifiedsStubList}}
-</template>
-
-<template name="CarClassifieds">
-  <h2>Classifieds - Cars</h2>
-  <nav>
-    {{#linkTo route='classifieds'}}Everything{{/linkTo}}
-    {{#linkTo route='classifieds.parts'}}Just Parts{{/linkTo}}
-  </nav>
-  {{> ClassifiedsStubList}}
-</template>
-
-<template name="PartClassifieds">
-  <h2>Classifieds - Parts</h2>
-  <nav>
-    {{#linkTo route='classifieds'}}Everything{{/linkTo}}
-    {{#linkTo route='classifieds.cars'}}Just Cars{{/linkTo}}
-  </nav>
-  {{> ClassifiedsStubList}}
+  <h2>Classifieds</h2>
+    {{> ClassifiedControl}}
+    {{#each filteredClassifieds}}
+       {{> ClassifiedStub}}
+   {{/each}}
 </template>
 
 <template name="ClassifiedsMine">
@@ -417,7 +418,7 @@
       What are you selling?
     </label>
     <select name="adType"
-            class="adtype-input form-control">
+            class="adType-input form-control">
       <option value="car" {{adTypeSelected "car" adType}} >Car</option>
       <option value="part" {{adTypeSelected "part" adType}}>Part</option>
     </select>
