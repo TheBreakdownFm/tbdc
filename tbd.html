@@ -28,7 +28,7 @@
         </div>
 
     </div>
-    <div class="container-fluid">
+    <div class="container">
         {{> yield}}
 
     </div>
@@ -68,34 +68,41 @@
 </template>
 
 <template name="ClassifiedsStubList">
-  <div class="classi-stub-list">
+    <div class="classi-stub-list">
 
-  </div>
+    </div>
 </template>
 
 <template name="ClassifiedFilterControls">
     <h4>Filter Controls</h4>
     <div class="row">
-            <div class="col-xs-12 well ">
+        <div class="col-xs-12 well text-center">
             <form class="form-inline classi-filters">
-                <div class="btn-group" role="group">
-                    <button type="button" class="btn btn-default filter-type-input-all {{selectedAdType "all"}}">All Ads</button>
-                    <button type="button" class="btn btn-default filter-type-input-cars  {{selectedAdType "car"}}">Just Cars</button>
-                    <button type="button" class="btn btn-default filter-type-input-parts  {{selectedAdType "part"}}">Just Parts</button>
+                <div class="form-group">
+                                    <div class="btn-group " role="group">
+                    <a type="button" class="btn btn-default filter-type-input-all {{selectedAdType "all"}}">All Ads</a>
+                    <a type="button" class="btn btn-default filter-type-input-cars  {{selectedAdType "car"}}">Just Cars</a>
+                    <a type="button" class="btn btn-default filter-type-input-parts  {{selectedAdType "part"}}">Just Parts</a>
                 </div>
+                </div>
+
                 <div class="form-group">
                     <input type="text" name="keywords" class="form-control filter-keyword-input" placeholder="Filter Titles" value="{{filterVal 'keywords'}}">
-                </div>
-                <div class="form-group">
+                    <div class="input-group">
+                        <span class="input-group-addon">$</span>
                         <input type="number" name="pricemin" class="form-control filter-price-min-input" placeholder="Price Min" value="{{filterVal 'pricemin'}}">
+                    </div>
+
+                    <div class="input-group">
+                        <span class="input-group-addon">$</span>
+                        <input type="number" name="pricemax" class="form-control filter-price-max-input" placeholder="Price Max" value="{{filterVal 'pricemax'}}">
+                    </div>
                 </div>
 
                 <div class="form-group">
-                    <input type="number" name="pricemax" class="form-control filter-price-max-input" placeholder="Price Max" value="{{filterVal 'pricemax'}}">
+                    <button class="btn btn-small btn-warning clear-filters-button">Clear Filters</button>
+                    <button class="btn btn-small btn-info save-filters-button">Save These Filters</button>
                 </div>
-
-                <button class="btn btn-small btn-warning clear-filters-button">Clear Filters</button>
-                <button class="btn btn-small btn-info save-filters-button">Save Filters</button>
             </form>
         </div>
     </div>
@@ -105,13 +112,13 @@
     <h4>Saved Filters</h4>
     <div class="row well">
         {{#each savedFiltersForUser}}
-        <div class="col-xs-12 ">
-            <h4>
+            <div class="col-xs-12 ">
+                <h4>
                 <span class="label label-default filter-select-control">{{adType}} w/ "{{keywords}}" in the title between {{formatusd pricemin}} and {{formatusd pricemax}}
                 </span>
-                <button class="btn btn-xs btn-danger delete-filter-button">Delete Filter</button>
-            </h4>
-        </div>
+                    <button class="btn btn-xs btn-danger delete-filter-button">Delete Filter</button>
+                </h4>
+            </div>
         {{/each}}
     </div>
 </template>
@@ -119,70 +126,73 @@
 <template name="allClassifieds">
     {{> ClassifiedControl}}
     <h2>Classifieds</h2>
-    <div class="row well">
-    {{#each filteredClassifieds}}
-       {{> ClassifiedStub}}
-   {{/each}}
+    <div class="row">
+        {{#each filteredClassifieds}}
+            {{> ClassifiedStub}}
+        {{/each}}
     </div>
 </template>
 
 <template name="ClassifiedsMine">
-  <h2>My Classifieds</h2>
-  {{#each classifieds}}
-  {{> ClassifiedStub}}
-  {{/each}}
+    <h2>My Classifieds</h2>
+    <div class="row">
+           {{#each classifieds}}
+        {{> ClassifiedStub}}
+    {{/each}}
+    </div>
+
 </template>
 
 <template name="ClassifiedNew">
-  {{#if currentUser}}
-  {{> newClassifiedForm }}
-  {{else}}
-  You've got to be signed if you want to post new stuff. Look at the top of the page for a "Sign In" button. If you haven't already got an account you can sign up on that same form as well.
-  {{/if}}
+    {{#if currentUser}}
+        {{> newClassifiedForm }}
+    {{else}}
+        You've got to be signed if you want to post new stuff. Look at the top of the page for a "Sign In" button. If you haven't already got an account you can sign up on that same form as well.
+    {{/if}}
 </template>
 
 <template name="ClassifiedEdit">
-  {{>editClassifiedForm}}
+    {{>editClassifiedForm}}
 </template>
 
 <template name="ClassifiedEditImages">
-  <button class="images-done-button">
-    Done
-  </button>
-  {{>GeneralClassiUploader}}
-  {{>ClassifiedImagesShow}}
+    <button class="images-done-button">
+        Done
+    </button>
+    {{>GeneralClassiUploader}}
+    {{>ClassifiedImagesShow}}
 </template>
 
 
 <template name="ClassifiedImagesShow">
-  <div class="classi-images">
-    <h4>Images</h4>
-    {{#each images}}
-    {{> ClassiImageShow}}
-    {{/each}}
-  </div>
+    <div class="classi-images">
+        <h4>Images</h4>
+        {{#each images}}
+            {{> ClassiImageShow}}
+        {{/each}}
+    </div>
 </template>
 
 <Template name="ClassiImageShow">
-  <img src="{{imageUrlForImageId}}" alt="{{imageUrlForImageId}}" >
-  <button class="delete-image-button"> Remove This Image </button>
+    <img src="{{imageUrlForImageId}}" alt="{{imageUrlForImageId}}" >
+    <button class="delete-image-button"> Remove This Image </button>
 </template>
 
 
 
 <template name="GeneralClassiUploader">
-  <form id="upload">
-    <div class="upload-images">
-      <p>The image at the top of this list will be the one that
-        shows up when your ad is displayed in a list.</p>
-      <div class="alert alert-success">
-        <span>Pick a file..</span>
-      </div>
+    <form id="upload">
+        <div class="upload-images">
+            <p>The image at the top of this list will be the one that
+                shows up when your ad is displayed in a list.</p>
+            <div class="alert alert-success">
+                <span>Pick a file..</span>
+            </div>
 
-      <input type="file">
-    </div>
+            <input type="file">
+        </div>
 
-  </form>
+    </form>
 </template>
 
 <template name="_loginButtonsAdditionalLoggedInDropdownActions">
@@ -190,84 +200,84 @@
 </template>
 
 <template name="ClassifiedShow">
-  <div class="row">
+    <div class="row">
 
-    <div class="col-md-8 col-sm-12">
-      {{> ClassifiedDetailView}}
-    </div>
-
-    <div class="col-md-4 col-sm-12">
-
-      {{#if isClassifiedOwner}}
-      <div class="ownerStuff row">
-        <div class="col-xs-12 bg-info">
-          <h3>You own this ad</h3>
+        <div class="col-md-8 col-sm-12">
+            {{> ClassifiedDetailView}}
         </div>
-        <div class="col-xs-12 panel text-center">
-          <p>
-            This is your ad, so you can do stuff with it.
-          </p>
-          <p>
-            <div class="btn-group-vertical" role="group">
-              <button type="button" class="btn btn-lg btn-default edit-button">
+
+        <div class="col-md-4 col-sm-12">
+
+            {{#if isClassifiedOwner}}
+                <div class="ownerStuff row">
+                    <div class="col-xs-12 bg-info">
+                        <h3>You own this ad</h3>
+                    </div>
+                    <div class="col-xs-12 panel text-center">
+                        <p>
+                            This is your ad, so you can do stuff with it.
+                        </p>
+                        <p>
+                        <div class="btn-group-vertical" role="group">
+                            <button type="button" class="btn btn-lg btn-default edit-button">
                 <span class="glyphicon glyphicon-pencil"
                       aria-hidden="true"></span>
-                Edit the words
-              </button>
+                                Edit the words
+                            </button>
 
-              <button type="button" class="btn btn-lg btn-default edit-pics-button">
+                            <button type="button" class="btn btn-lg btn-default edit-pics-button">
                 <span class="glyphicon glyphicon-camera"
                       aria-hidden="true"></span>
-                Change The pictures
-              </button>
+                                Change The pictures
+                            </button>
 
-              <button type="button" class="btn btn-danger btn-lg  delete-ad-button">
+                            <button type="button" class="btn btn-danger btn-lg  delete-ad-button">
                 <span class="glyphicon glyphicon-remove"
                       aria-hidden="true"></span>
-                Delete the whole thing
-              </button>
+                                Delete the whole thing
+                            </button>
 
-            </div>
-          </p>
+                        </div>
+                        </p>
+                    </div>
+                </div>
+            {{else}}
+
+            {{/if}}
+
+            <h1 class="text-center">
+                Action
+            </h1>
+
+
+
+            {{#if currentUser}}
+                {{#if isClassifiedOwner}}
+                    {{> OffersView}}
+                {{else}}
+                    {{>BuyerOffers}}
+                {{/if}}
+            {{else}}
+                {{> Yuno}}
+            {{/if}}
+            {{#if okMakeNewOffer}}
+                {{> OfferNew}}
+            {{/if}}
         </div>
-      </div>
-      {{else}}
-
-      {{/if}}
-
-      <h1 class="text-center">
-        Action
-      </h1>
-
-
-
-      {{#if currentUser}}
-          {{#if isClassifiedOwner}}
-            {{> OffersView}}
-          {{else}}
-            {{>BuyerOffers}}
-          {{/if}}
-      {{else}}
-      {{> Yuno}}
-      {{/if}}
-        {{#if okMakeNewOffer}}
-            {{> OfferNew}}
-        {{/if}}
     </div>
-  </div>
 </template>
 
 
 <template name="Yuno">
-  <div class="encourage-sign-up">
-    People who are logged in can make offers. Y u no sign up?
-  </div>
+    <div class="encourage-sign-up">
+        People who are logged in can make offers. Y u no sign up?
+    </div>
 </template>
 
 <template name="BuyerOffers">
-  {{#each offersForClassi}}
-  {{> OfferShow}}
-  {{/each}}
+    {{#each offersForClassi}}
+        {{> OfferShow}}
+    {{/each}}
 </template>
 
 
@@ -368,66 +378,66 @@
 </template>
 
 <template name="ClassifiedDetailView">
-  <div class="row">
-    <div class="col-sm-12">
-      <h1 class="text-center">
-        {{title}}<br>
-        <small>
-          Type: {{adType}}
-          Created {{reldate createdAt}} by {{username}}<br>
-            About {{distanceFromUser}} miles away near {{zipcode.city}}, {{zipcode.state}}
-        </small>
-          <br>
-          <span class="label label-success">{{formatusd asking}}</span>
-      </h1>
+    <div class="row">
+        <div class="col-sm-12">
+            <h1 class="text-center">
+                {{title}}<br>
+                <small>
+                    Type: {{adType}}
+                    Created {{reldate createdAt}} by {{username}}<br>
+                    About {{distanceFromUser}} miles away near {{zipcode.city}}, {{zipcode.state}}
+                </small>
+                <br>
+                <span class="label label-success">{{formatusd asking}}</span>
+            </h1>
+        </div>
     </div>
-  </div>
-  <div class="row text-center">
-    <div class="hero-image col-xs-12">
-      <img class="img-responsive center-block" src="{{firstImage}}">
+    <div class="row text-center">
+        <div class="hero-image col-xs-12">
+            <img class="img-responsive center-block" src="{{firstImage}}">
+        </div>
     </div>
-  </div>
-  <div class="row">
+    <div class="row">
 
-    <div class="col-xs-12">
-      {{#if willship}}
-      <div class="col-xs-12 text-center">
-        <h4><span class="label label-info">Willing to ship under conditions</span></h4>
-        <p>{{shiprestric}}</p>
-      </div>
-      {{else}}
-      <div class="col-xs-12 text-center">
-        <h4><span class="label label-info"> Local Pickup Only</span> </h4>
-      </div>
-      {{/if}}
-      <p class="bg-default">{{desc}}</p>
-      <h3 class="text-center">Known Issues</h3>
-        <ul>
-            {{#each p in semiStringSplit problems}}
-                <li>{{p}}</li>
-            {{/each}}
-        </ul>
-      <h3 class="text-center">Mods</h3>
-        <ul>
-            {{#each m in semiStringSplit mods}}
-            <li>{{m}}</li>
-            {{/each}}
-        </ul>
+        <div class="col-xs-12">
+            {{#if willship}}
+                <div class="col-xs-12 text-center">
+                    <h4><span class="label label-info">Willing to ship under conditions</span></h4>
+                    <p>{{shiprestric}}</p>
+                </div>
+            {{else}}
+                <div class="col-xs-12 text-center">
+                    <h4><span class="label label-info"> Local Pickup Only</span> </h4>
+                </div>
+            {{/if}}
+            <p class="bg-default">{{desc}}</p>
+            <h3 class="text-center">Known Issues</h3>
+            <ul>
+                {{#each p in semiStringSplit problems}}
+                    <li>{{p}}</li>
+                {{/each}}
+            </ul>
+            <h3 class="text-center">Mods</h3>
+            <ul>
+                {{#each m in semiStringSplit mods}}
+                    <li>{{m}}</li>
+                {{/each}}
+            </ul>
+        </div>
     </div>
-  </div>
-  <div class="row">
-    <h2 class="text-center">Pictures</h2>
-    {{#each image in images}}
-    <img class="img-responsive center-block" src="{{image}}">
-    {{/each}}
-  </div>
+    <div class="row">
+        <h2 class="text-center">Pictures</h2>
+        {{#each image in images}}
+            <img class="img-responsive center-block" src="{{image}}">
+        {{/each}}
+    </div>
 </template>
 
 <template name="strArrayDingus">
     <ul>
         {{#each ai in semiStringSplit arr}}
-                <li>{{ai}}<span class="glyphicon glyphicon-remove remove-arr-item"></span></li>
-         {{/each}}
+            <li>{{ai}}<span class="glyphicon glyphicon-remove remove-arr-item"></span></li>
+        {{/each}}
     </ul>
 
 </template>
@@ -437,175 +447,169 @@
 </template>
 
 <template name="editClassifiedForm">
-  <div class="edit-classi-view row">
-    <h2 class="text-center">Edit ad created {{reldate createdAt}}</h2>
-    <div class="col-md-8 col-sm-12 panel">
-      <form class="classified-fields" id="classiEditForm">
-        {{> ClassifiedFields}}
-      </form>
-    </div>
-    <div class="col-md-4 col-sm-12">
-      <div class="ownerStuff row">
-        <div class="col-xs-12 panel text-center">
-          <p>
-            <div class="btn-group-vertical" role="group">
-              <button type="submit" form="classiEditForm"
-                      class="save-button btn btn-lg  btn-success">
+    <div class="edit-classi-view row">
+        <div class="col-md-8 col-xs-12 ">
+            <h2 class="text-center">Edit ad created {{reldate createdAt}}</h2>
+            <form class="classified-fields" id="classiEditForm">
+                {{> ClassifiedFields}}
+            </form>
+        </div>
+        <div class="col-md-4 col-xs-12">
+            <div class="ownerStuff row">
+                <div class="col-xs-12 panel text-center">
+                    <p>
+                    <div class="btn-group-vertical" role="group">
+                        <button type="submit" form="classiEditForm"
+                                class="save-button btn btn-lg  btn-success">
                 <span class="glyphicon glyphicon-ok"
                       aria-hidden="true"></span>
-                Save Changes</button>
-             
-              <button type="button" class="btn btn-danger btn-lg  cancel-edit-classi-button">
+                            Save Changes</button>
+
+                        <button type="button" class="btn btn-danger btn-lg  cancel-edit-classi-button">
                 <span class="glyphicon glyphicon-remove"
                       aria-hidden="true"></span>
-                Cancel
-              </button>
-              
+                            Cancel
+                        </button>
+
+                    </div>
+                    </p>
+                </div>
             </div>
-          </p>
         </div>
-      </div>
     </div>
-  </div>
 </template>
 
 
 <template name="ClassifiedFields">
-    <div class="col-xs-12">
-  <div class="form-group">
-    <label>
-      What are you selling?
-    </label>
-    <select name="adType"
-            class="adType-input form-control">
-        <option value="part" {{adTypeSelected "part" adType}}>Part</option>
-      <option value="car" {{adTypeSelected "car" adType}} >Car</option>
-    </select>
-  </div>
-    {{#if isCar}}
-    <div class="form-group">
-        <label>Year</label>
-        <input type="number"
-               name="year"
-               value="{{year}}"
-               class="form-control"/>
-    </div>
-    {{/if}}
-    <div class="form-group">
-        <label>
-            Make/Manufacturer
-        </label>
-        <input type="text"
-               name="make"
-               value="{{make}}"
-               class="form-control"/>
-    </div>
-    <div class="form-group">
-        <label>Model</label>
-        <input type="text"
-               name="mdel"
-               value="{{mdel}}"
-               class="form-control"/>
-    </div>
-  <div class="form-group">
-    <label>
-      Asking Price
-    </label>
-    <input type="number"
-           name="asking"
-           value="{{asking}}"
-           class="asking-input form-control" />
-  </div>
-  <div class="checkbox">
-      <label>
-    <input type="checkbox"
-           name="willship"
-           checked="{{willship}}"
-           class="toggle-willship"/>
-      Willing to Ship?
-    </label>
-  </div>
-  {{#if isShippy}}
-  {{> ShippyFields}}
-  {{/if}}
-  <div class="form-group">
-    <label>
-      Description
-    </label>
+        <div class="form-group">
+            <label>
+                What are you selling?
+            </label>
+            <select name="adType"
+                    class="adType-input form-control">
+                <option value="part" {{adTypeSelected "part" adType}}>Part</option>
+                <option value="car" {{adTypeSelected "car" adType}} >Car</option>
+            </select>
+        </div>
+        {{#if isCar}}
+            <div class="form-group">
+                <label>Year</label>
+                <input type="number"
+                       name="year"
+                       value="{{year}}"
+                       class="form-control"/>
+            </div>
+        {{/if}}
+        <div class="form-group">
+            <label>
+                Make/Manufacturer
+            </label>
+            <input type="text"
+                   name="make"
+                   value="{{make}}"
+                   class="form-control"/>
+        </div>
+        <div class="form-group">
+            <label>Model</label>
+            <input type="text"
+                   name="mdel"
+                   value="{{mdel}}"
+                   class="form-control"/>
+        </div>
+        <div class="form-group">
+            <label>
+                Asking Price
+            </label>
+            <input type="number"
+                   name="asking"
+                   value="{{asking}}"
+                   class="asking-input form-control" />
+        </div>
+        <div class="checkbox">
+            <label>
+                <input type="checkbox"
+                       name="willship"
+                       checked="{{willship}}"
+                       class="toggle-willship"/>
+                Willing to Ship?
+            </label>
+        </div>
+        {{#if isShippy}}
+            {{> ShippyFields}}
+        {{/if}}
+        <div class="form-group">
+            <label>
+                Description
+            </label>
     <textarea name="desc"
               class="form-control"
               value="{{desc}}"
               placeholder="Describe the item here..."></textarea>
-  </div>
-
         </div>
-  {{#if isCar}}
-      <div class="col-xs-12">
-      <div class="form-group">
-      <label>Miles</label>
-          <input type="number" class="form-control" value="{{miles}}" placeholder="Miles">
-      </div>
-        <div class="form-group">
-            <label>Transmission</label>
-            <select name="tranny" class="form-control">
-                <option value="auto">Automatic</option>
-                <option value="manual">Manual</option>
-            </select>
+
+    {{#if isCar}}
+        <div class="col-xs-12">
+            <div class="form-group">
+                <label>Miles</label>
+                <input type="number" class="form-control" value="{{miles}}" placeholder="Miles">
+            </div>
+            <div class="form-group">
+                <label>Transmission</label>
+                <select name="tranny" class="form-control">
+                    <option value="auto">Automatic</option>
+                    <option value="manual">Manual</option>
+                </select>
+            </div>
         </div>
-      </div>
 
-  <div class="col-xs-12">
-  <h4>Known Issues</h4>
-      <div class="form-group">
-    <input name="problems"
-              class="form-control"
-           type="hidden"
-              value="{{probsStr}}"
-              placeholder="Describe any known issues here..."/>
-  </div>
+        <div class="col-xs-12">
+            <h4>Known Issues</h4>
+            <div class="form-group">
+                <input name="problems"
+                       class="form-control"
+                       type="hidden"
+                       value="{{probsStr}}"
+                       placeholder="Describe any known issues here..."/>
+            </div>
 
-      <ul >
 
-      {{# each prob in probsArr}}
-          <li>{{prob}}<span class="glyphicon glyphicon-remove remove-prob-item"></span></li>
-     {{/each}}
-      </ul>
-  </div>
-  <div class="col-xs-10">
+                {{# each prob in probsArr}}
+                    <div class="well">{{prob}}<span class="glyphicon glyphicon-remove pull-right remove-prob-item"></span></div>
+                {{/each}}
+        </div>
+        <div class="col-xs-10">
 
-      <input type="text" class="form-control new-prob-input"/>
-  </div>
-  <div class="col-xs-2">
+            <input type="text" class="form-control new-prob-input"/>
+        </div>
+        <div class="col-xs-2">
 
-      <button class="btn btn-success add-prob-item"><span class="glyphicon glyphicon-plus"></span> Add</button>
-  </div>
+            <button class="btn btn-success add-prob-item"><span class="glyphicon glyphicon-plus"></span> Add</button>
+        </div>
 
-          <div class="col-xs-12">
-      <h4>Mods</h4>
-  <div class="form-group">
-    <input name="mods"
-           type="hidden"
+        <div class="col-xs-12">
+            <h4>Mods</h4>
+            <div class="form-group">
+                <input name="mods"
+                       type="hidden"
 
-              value="{{modsStr}}"
-              class="form-control"/>
-  </div>
-        <ul >
-        {{#each mi in modsArr}}
-            <li>{{mi}}<span class=" glyphicon glyphicon-remove remove-mod-item"></span></li>
-        {{/each}}
-        </ul>
-  </div>
-  <div class="col-xs-10">
+                       value="{{modsStr}}"
+                       class="form-control"/>
+            </div>
+                {{#each mi in modsArr}}
+                    <div class="well">{{mi}}<span class="pull-right glyphicon glyphicon-remove remove-mod-item"></span></div>
+                {{/each}}
+        </div>
+        <div class="col-xs-10">
 
-      <input type="text" class="form-control new-mod-input "/>
-  </div>
-  <div class="col-xs-2">
-      <button class="btn-success btn add-mod-item" type="button"><span class="glyphicon glyphicon-plus"></span> Add</button>
-      </div>
+            <input type="text" class="form-control new-mod-input "/>
+        </div>
+        <div class="col-xs-2">
+            <button class="btn-success btn add-mod-item" type="button"><span class="glyphicon glyphicon-plus"></span> Add</button>
+        </div>
 
-  {{/if}}
-  <!-- Not yet implemented fields -->
-  <!--
+    {{/if}}
+    <!-- Not yet implemented fields -->
+    <!--
   <label>
     Trades Considered?
     <input type="checkbox"
@@ -634,45 +638,45 @@
 </template>
 
 <template name="ShippyFields">
-  <div class="form-group">
-    <label>
-      Shipping Restrictions
-      </label>
+    <div class="form-group">
+        <label>
+            Shipping Restrictions
+        </label>
       <textarea name="shiprestric"
                 class="form-control"
                 value="{{shiprestric}}"
                 placeholder="Describe any special conditions for
                              shipping here..."></textarea>
-  </div>
+    </div>
 </template>
 
 
 <template name="newClassifiedForm">
-  <form class="classified-fields">
-      <div class="row">
+    <form class="classified-fields">
+        <div class="row">
 
-          {{> ClassifiedFields}}
-      </div>
-      <div class="row">
-          <div class="col-xs-12 text-center">
+            {{> ClassifiedFields}}
+        </div>
+        <div class="row">
+            <div class="col-xs-12 text-center">
 
-              <hr>
-              <button class="save-button btn-success btn">Done here, now time for pictures.</button>
-          </div>
-      </div>
-  </form>
+                <hr>
+                <button class="save-button btn-success btn">Done here, now time for pictures.</button>
+            </div>
+        </div>
+    </form>
 </template>
 
 <template name="ClassifiedStub">
-    <div class="col-xs-12 col-md-6 col-lg-4 ">
-      <h2 class="classified-stub">
-        {{title}}<br>
-          <span class="label label-success">{{formatusd asking}}</span>
-          <br>
-          <small>Created {{reldate createdAt}}</small>
-      </h2>
+    <div class="col-xs-12 col-md-6 col-lg-4 well ">
+        <h2 class="classified-stub">
+            {{title}}<br>
+            <span class="label label-success">{{formatusd asking}}</span>
+            <br>
+            <small>Created {{reldate createdAt}}</small>
+        </h2>
         <span class="glyphicon {{adTypeIcon}}"></span> This is an ad for a {{adType}}
-      <br>
+        <br>
         <img class="classified-stub img-responsive" src="{{firstImage}}">
     </div>
 </template>
@@ -680,36 +684,36 @@
 <!--Offer Templates-->
 
 <template name="OfferNew">
-  <div class="row panel">
-    <div class="col-xs-12 bg-info">
-      <h2>Make an offer</h2>
-    </div>
-    <div class="col-xs-12">
-      <div class="new-offer-form">
-        <p>
-          This ad is accepting offers. Send one.
-        </p>
-        <form class="new-offer-form" id="newOfferForm">
-          <div class="form-group">
-            <label>Offer Amount</label>
+    <div class="row panel">
+        <div class="col-xs-12 bg-info">
+            <h2>Make an offer</h2>
+        </div>
+        <div class="col-xs-12">
+            <div class="new-offer-form">
+                <p>
+                    This ad is accepting offers. Send one.
+                </p>
+                <form class="new-offer-form" id="newOfferForm">
+                    <div class="form-group">
+                        <label>Offer Amount</label>
 
-            <input type="number" class="form-control"  name="amnt" value="{{amnt}}"
-                   placeholder="Offer Amount"/>
-          </div>
-          <div class="form-group">
-            <label>Message</label>
+                        <input type="number" class="form-control"  name="amnt" value="{{amnt}}"
+                               placeholder="Offer Amount"/>
+                    </div>
+                    <div class="form-group">
+                        <label>Message</label>
 
-            <input type="text" name="msg" class="form-control" value="{{msg}}"
-                   placeholder="Message, be nice."/>
-          </div>
-        </form>
-          <p class="text-center">
-              <button type="submit" form="newOfferForm" class="btn new-offer-button btn-lg btn-success">Send
-                  Offer</button>
-          </p>
-      </div>
+                        <input type="text" name="msg" class="form-control" value="{{msg}}"
+                               placeholder="Message, be nice."/>
+                    </div>
+                </form>
+                <p class="text-center">
+                    <button type="submit" form="newOfferForm" class="btn new-offer-button btn-lg btn-success">Send
+                        Offer</button>
+                </p>
+            </div>
+        </div>
     </div>
-  </div>
 </template>
 
 
@@ -718,5 +722,5 @@
 </template>
 
 <template name="OfferSellerView">
-  Seller View Goes here
+    Seller View Goes here
 </template>
