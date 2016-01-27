@@ -59,19 +59,28 @@ let _query_obj_from_filters = function(){
         //build keywords
 
         if(filters.keywords && filters.keywords.length > 1){
-            qo.title = {$regex: '.*' + filters.keywords + '.*', $options: 'i'}
+            qo.title = {$regex: '.*' + filters.keywords + '.*', $options: 'i'};
+        }
+
+        //hide/show accepted offers
+
+        if(!filters.showAcceptedOffers){
+            qo.hasAcceptedOffers = {$ne: true};
         }
     }
     console.log(qo);
     return qo;
-}
+};
 
 Router.route('/classifieds/', function(){
     this.render('allClassifieds', {
         data:{
             classifieds: function() {
                 return Classifieds.find(
-                    {owner: {$ne: Meteor.userId()}},
+                    {
+                        owner: {$ne: Meteor.userId()},
+                        hasAcceptedOffers: {$ne: true}
+                    },
                     {sort: {createdAt: -1}});
             }
         }
@@ -84,7 +93,7 @@ Router.route('/classifieds/mine', function(){
     this.render('ClassifiedsMine',{
         data: {
             classifieds: function(){
-                return Classifieds.find({owner: Meteor.userId()}, {sort: {createdAt: -1}})
+                return Classifieds.find({owner: Meteor.userId()}, {sort: {createdAt: -1}});
             }
         }
     });
@@ -105,7 +114,7 @@ Router.route('/classified/:_id', function(){
     this.render('ClassifiedShow', {
         data:
         function(){
-            return Classifieds.findOne({_id: classId})
+            return Classifieds.findOne({_id: classId});
         }
     });
 
@@ -120,13 +129,13 @@ Router.route('classifieds/:_id/offers/:buyerId', function() {
         data: function() {
             return Offers.find({classi: this.params._id, buyer: this.params.buyerId});
         }
-    })
+    });
 });
 
 Router.route('/classified/:_id/edit', function(){
     this.render('ClassifiedEdit',{
         data: function () {
-            return Classifieds.findOne({_id: this.params._id})
+            return Classifieds.findOne({_id: this.params._id});
         }
     });
 },{
@@ -151,6 +160,14 @@ Router.route('proifle/mine', function(){
    });
 },{
     name: 'profile.mine'
+});
+
+Router.route('dashboard', function(){
+   this.render('Dashboard', {
+       data: {}
+   });
+}, {
+    name: 'dashboard'
 });
 //Server
 
@@ -201,6 +218,17 @@ if (Meteor.isServer) {
             }
 
     });
+
+    //Flag the classi if it has accpeted offers
+    Offers.after.update(function(userId, doc){
+        if(doc.status === 'accepted'){
+            Classifieds.update(doc.classi, {
+                $set: {
+                    hasAcceptedOffers: true
+                }
+            });
+        }
+    });
 }
 
 
@@ -218,11 +246,11 @@ if (Meteor.isClient) {
 
     //Global Template Helpers
     Template.registerHelper('reldate', (date)=> {
-        return moment(date).fromNow();
+        return date ? moment(date).fromNow() : '';
     });
 
     Template.registerHelper('semiStringSplit', function (str) {
-        return str.split(';');
+        return str ? str.split(';') :  [];
     });
     Template.registerHelper('formatusd', (num)=> {
         return numeral(num).format('$ 0,0[.]00');
@@ -235,7 +263,7 @@ if (Meteor.isClient) {
         var dist = Math.sqrt(Math.pow(dx, 2) + Math.pow(dy, 2)) * 69;
 
         return Math.floor(dist);
-    }
+    };
 
     //location stuff
     let _getUserLoc = function(){
@@ -299,14 +327,19 @@ if (Meteor.isClient) {
     });
 
 
-    let _set_classi_filter = _.debounce(function (k, v) {
+
+    let _set_classi_filter = function (k, v) {
         console.log('Filters Before: ' + Session.get('classiFilters'));
         let filters = Session.get('classiFilters');
-        if (filters == undefined) {
+        if (filters === undefined) {
             filters = {};
         }
         filters[k] = v;
         Session.set('classiFilters', filters);
+    };
+
+    let _set_classiFilter_debounced = _.debounce(function(k, v){
+        _set_classi_filter(k,v);
     }, 300, false);
 
     Template.ClassifiedControl.events({
@@ -348,6 +381,10 @@ if (Meteor.isClient) {
             if (currentFilters && currentFilters !== {}) {
                 Meteor.call('saveClassiFilters', currentFilters);
             }
+        },
+        "click .filter-show-accepted-offers-input" : function(event){
+            let showAcOff = event.target.checked;
+            _set_classi_filter('showAcceptedOffers' , showAcOff);
         }
     });
 
@@ -388,20 +425,99 @@ if (Meteor.isClient) {
             }
         },
         filterVal: function (filterType) {
-            return Session.get('classiFilters')[filterType] || null;
+            if(Session.get('classiFilters')){
+                return Session.get('classiFilters')[filterType] || null;
+            } else {
+                return null;
+            }
+        },
+        showAcceptedOffersChecked: function(){
+            let rv = '';
+            if(Session.get('classiFilters') && Session.get('classiFilter').showAcceptedOffers){
+                rv = 'checked';
+            }
+            return rv;
         }
     });
 
 
     Template.MySavedFilters.helpers({
         savedFiltersForUser: function () {
-            let filts = Meteor.user().profile ? Meteor.user().profile['savedClassiFilters'] : false;
+            let filts = Meteor.user().profile ? Meteor.user().profile.savedClassiFilters : false;
             if (filts) {
                 return _.values(filts);
             } else {
                 return [];
             }
         }
+
+    });
+
+    let _classiHasAcceptedOffers = function(classiId){
+        return Offers.find({status: 'accepted', classi: classiId}).count() > 0;
+    };
+
+    Template.Dashboard.helpers({
+        openClassifiedsForUser: function () {
+            let classis = Classifieds.find({owner: Meteor.userId()}, {sort: {createdAt: -1}});
+            let opens = [];
+            classis.forEach(function(it){
+                if(!_classiHasAcceptedOffers(it._id)){
+                    opens.push(it);
+                }
+            });
+            return opens;
+        },
+        closedClassifiedsForUser: function(){
+            let classis = Classifieds.find({owner: Meteor.userId()}, {sort: {createdAt: -1}});
+            let closeds = [];
+            classis.forEach(function(it){
+                if(_classiHasAcceptedOffers(it._id)){
+                    closeds.push(it);
+                }
+            });
+            return closeds;
+        },
+        pendingOffersForUser: function(){
+             return Offers.find({
+                status: 'pending',
+                classiOwnerId: {$ne: Meteor.userId()}
+            });
+        },
+        declinedOffersForUser: function(){
+             return Offers.find({
+                status: 'declined',
+                 classiOwnerId: {$ne: Meteor.userId()}
+            });
+        },
+        acceptedOffersForUser: function(){
+            return Offers.find({
+                status: 'accepted',
+                classiOwnerId: {$ne: Meteor.userId()}
+            });
+        },
+        numPendingOffersForClassi: function(c){
+            return Offers.find({
+                classi: c._id,
+                classiOwnerId: Meteor.userId(),
+                status: 'pending'
+            }).count();
+        }
+    });
+
+    Template.DashboardOfferStub.helpers({
+        classiForOffer: function(){
+            return Classifieds.findOne({_id: this.classi});
+        }
+    });
+
+    Template.DashboardClassiStub.events({
+        "click .visit-classi-button" : function(event, tmpl) {
+            Router.go('classified.show', {_id: this._id});
+        }
+    });
+
+    Template.DashboardClassiStub.helpers({
 
     });
 
@@ -421,32 +537,32 @@ if (Meteor.isClient) {
 
             return val === selopt ? {selected: 'selected'}
                 : '';
-        }
-        , isCar: function () {
+        },
+        isCar: function () {
             let cv = Template.instance().state.get('adType');
-            return cv != null ? cv === 'car' : this.adType === 'car';
-        }
-        , isShippy: function () {
+            return cv !== null ? cv === 'car' : this.adType === 'car';
+        },
+        isShippy: function () {
             let sv = Template.instance().state.get('willship');
-            return sv != null ? sv : this.willship;
+            return sv !== null ? sv : this.willship;
         },
         modsArr: function () {
             let modsarr = Template.instance().state.get('mods');
             let prevmods = this.mods ? this.mods.split(';') : [];
-            return modsarr != null ? modsarr : prevmods;
+            return modsarr !== null ? modsarr : prevmods;
         },
         modsStr: function () {
             let modsarr = Template.instance().state.get('mods');
-            return modsarr != null ? modsarr.join(';') : this.mods || '';
+            return modsarr !== null ? modsarr.join(';') : this.mods || '';
         },
         probsArr: function () {
             let probsarr = Template.instance().state.get('problems');
             let prevprobs = this.problems ? this.problems.split(';') : [];
-            return probsarr != null ? probsarr : prevprobs;
+            return probsarr !== null ? probsarr : prevprobs;
         },
         probsStr: function () {
             let probsarr = Template.instance().state.get('problems');
-            return probsarr != null ? probsarr.join(';') : this.problems || '';
+            return probsarr !== null ? probsarr.join(';') : this.problems || '';
         }
 
     });
@@ -473,6 +589,7 @@ if (Meteor.isClient) {
                 mods.push(currmod);
                 tmpl.state.set('mods', mods);
                 tmpl.state.set('mod', null);
+                tmpl.find('.new-mod-input').value = '';
             }
         },
         "click .remove-mod-item": function (event, tmpl) {
@@ -491,6 +608,7 @@ if (Meteor.isClient) {
                 probs.push(currprob);
                 tmpl.state.set('problems', probs);
                 tmpl.state.set('problem', null);
+                tmpl.find('.new-prob-input').value = '';
             }
         },
         "click .remove-prob-item": function (event, tmpl) {
@@ -527,12 +645,23 @@ if (Meteor.isClient) {
 
             deltaClassi.title = '' + yearstr + ' ' + deltaClassi.make + ' ' + deltaClassi.mdel;
             deltaClassi.desc = event.target.desc.value;
-            Meteor.call("updateClassified", this._id, deltaClassi);
+
+            let filledOut = _.reduce(deltaClassi, function(memo, val){return memo && ((_.isString(val) && ! _.isEmpty(val)) || (_.isNumber(val) && !_.isNaN(val)) || (_.isBoolean(val))) ;}, true);
+
+            if(!filledOut){
+                Flash.danger('You have to fill all the fields out to post ads. If you don\'t know something, just type "I don\'t know" or "none" or something like that.');
+            } else {
+
+
+                Meteor.call("updateClassified", this._id, deltaClassi);
+            }
+
+
         },
         "click .delete-button": function () {
             Meteor.call("deleteClassified", this._id);
-        }
-        , "click .cancel-edit-classi-button": function () {
+        },
+        "click .cancel-edit-classi-button": function () {
             Router.go('classified.show', {_id: this._id});
         }
     });
@@ -541,28 +670,37 @@ if (Meteor.isClient) {
     Template.newClassifiedForm.events({
         "submit .classified-fields": function (event) {
             event.preventDefault();
-            var newClassi = {};
-            newClassi.posted = true;
-            newClassi.adType = event.target.adType.value;
-            newClassi.asking = parseInt(event.target.asking.value);
-            newClassi.willship = event.target.willship.checked;
-            newClassi.make = event.target.make.value;
-            newClassi.mdel = event.target.mdel.value; //is model a dirty word?
-            if (event.target.willship.checked === true) {
-                newClassi.shiprestric = event.target.shiprestric.value;
-            }
-            newClassi.desc = event.target.desc.value;
-            let yearstr = '';
-            if (event.target.adType.value === 'car') {
-                newClassi.problems = event.target.problems.value;
-                newClassi.mods = event.target.mods.value;
-                newClassi.year = parseInt(event.target.year.value);
-                yearstr = newClassi.year + ' ';
-            }
-            newClassi.title = '' + yearstr + ' ' + newClassi.make + ' ' + newClassi.mdel;
 
-            Meteor.call("addClassified", newClassi);
-            event.target.title.value = "";
+
+                var newClassi = {};
+                newClassi.posted = true;
+                newClassi.adType = event.target.adType.value;
+                newClassi.asking = parseInt(event.target.asking.value);
+                newClassi.willship = event.target.willship.checked;
+                newClassi.make = event.target.make.value;
+                newClassi.mdel = event.target.mdel.value; //is model a dirty word?
+                if (event.target.willship.checked === true) {
+                    newClassi.shiprestric = event.target.shiprestric.value;
+                }
+                newClassi.desc = event.target.desc.value;
+                let yearstr = '';
+                if (event.target.adType.value === 'car') {
+                    newClassi.problems = event.target.problems.value;
+                    newClassi.mods = event.target.mods.value;
+                    newClassi.year = parseInt(event.target.year.value);
+                    yearstr = newClassi.year + ' ';
+                }
+                newClassi.title = '' + yearstr + ' ' + newClassi.make + ' ' + newClassi.mdel;
+
+            let filledOut = _.reduce(newClassi, function(memo, val){return memo && ((_.isString(val) && ! _.isEmpty(val)) || (_.isNumber(val) && !_.isNaN(val)) || (_.isBoolean(val))) ;}, true);
+
+            if(!filledOut){
+                Flash.danger('You have to fill ALL the fields out to post ads, even mods & problems. If you don\'t know something or it does not apply, just type "I don\'t know" or something like that.');
+            } else {
+
+                Meteor.call("addClassified", newClassi);
+                event.target.title.value = "";
+            }
         }
     });
 
@@ -577,7 +715,9 @@ if (Meteor.isClient) {
     //ClassifiedStub
     Template.ClassifiedStub.helpers({
         firstImage: function () {
-            return this.images[0] || "";
+            if (this.images){
+                return this.images[0] || "";
+            }
         },
         adTypeIcon: function () {
             if (this.adType === 'car') {
@@ -601,9 +741,13 @@ if (Meteor.isClient) {
             return this.images ? this.images[0] : "";
         },
         distanceFromUser: function () {
-            let dist = _distance(this.loc.coordinates, Meteor.user().profile.loc.coordinates);
-            console.log('dist: '+ dist);
-            return dist;
+            if(this.loc && this.loc.coordinates && Meteor.user().profile.loc.coordinates){
+                let dist = _distance(this.loc.coordinates, Meteor.user().profile.loc.coordinates);
+                console.log('dist: '+ dist);
+                return dist;
+            } else {
+                return 0;
+            }
         }
 
     });
@@ -611,8 +755,8 @@ if (Meteor.isClient) {
     Template.ClassifiedShow.helpers({
         isClassifiedOwner: function () {
             return this.owner === Meteor.userId();
-        }
-        , offers: function () {
+        },
+        offers: function () {
             //if seller
             if (this.owner === Meteor.userId()) {
                 //look to see who's selected (if anyone)
@@ -622,18 +766,18 @@ if (Meteor.isClient) {
                 //else just return them all
                 return Offers.find({classi: this._id});
             }
-        }
-        , buyersWithOffersIn: function () {
-            return Offers.find({classi: this._id,});
-        }
-        , okMakeNewOffer: function () {
+        },
+        buyersWithOffersIn: function () {
+            return Offers.find({classi: this._id});
+        },
+        okMakeNewOffer: function () {
             let okmakeoffer = false;
             okmakeoffer = this.owner !== Meteor.userId() && Meteor.userId() && Offers.find({
                     $or: [
                         {classi: this._id, status: 'accepted'},
                         {classi: this._id, createdBy: Meteor.userId(), status: 'pending'}
                     ]
-                }).count() == 0;
+                }).count() === 0;
             return okmakeoffer;
         },
 
@@ -675,12 +819,13 @@ if (Meteor.isClient) {
 
     //OfferNew
     Template.OfferNew.events({
-        "submit .new-offer-form": function (event) {
+        "submit .new-offer-form": function (event, tmpl) {
             event.preventDefault();
             var newOffer = {};
             newOffer.msg = event.target.msg.value;
             newOffer.amnt = event.target.amnt.value;
             newOffer.classi = this._id;
+            tmpl.find('.offer-input-field').value = '';
             Meteor.call('addOffer', newOffer);
             return false;
             //TODO: not sure why this return false is needed here
@@ -697,8 +842,8 @@ if (Meteor.isClient) {
             newOffer.msg = event.target.msg.value;
             newOffer.amnt = event.target.amnt.value;
             Meteor.call('makeCounterOffer', this._id, newOffer);
-        }
-        , "click .accept-offer-button": function (event) {
+        },
+        "click .accept-offer-button": function (event) {
             Meteor.call('acceptOffer', this._id);
         }
     });
@@ -706,11 +851,11 @@ if (Meteor.isClient) {
     Template.OfferShow.helpers({
         isSender: function () {
             return this.sender === Meteor.userId();
-        }
-        , okToCounter: function () {
+        },
+        okToCounter: function () {
             return this.status !== 'accepted' && this.status !== 'declined';
-        }
-        , statusClass: function () {
+        },
+        statusClass: function () {
             let retclass = '';
             if (this.status === 'accepted') {
                 retclass = 'bg-success';
@@ -720,8 +865,8 @@ if (Meteor.isClient) {
                 retclass = 'bg-danger';
             }
             return retclass;
-        }
-        , statusMsg: function () {
+        },
+        statusMsg: function () {
 
             let retclass = '';
             if (this.status === 'accepted') {
@@ -742,7 +887,7 @@ if (Meteor.isClient) {
         offersForClassi: function () {
             return Offers.find({classi: this._id});
         }
-    })
+    });
 
     //OffersView
     Template.OffersView.helpers({
@@ -757,11 +902,9 @@ if (Meteor.isClient) {
                 return offy.sender !== offy.classiOwnerId;
             }), 'createdBy'));
 
-            console.log('Buyers: ' + buyers);
-            console.log('Offers: ' + offers);
             let othreads = [];
             _.each(buyers, function (el, index, list) {
-                othreads[index] = {}
+                othreads[index] = {};
                 othreads[index].buyer = el;
                 othreads[index].offers = _.filter(offers, function (offer) {
                     return offer.sender === el || offer.recipient === el;
@@ -770,7 +913,6 @@ if (Meteor.isClient) {
                     othreads[index].buyer = othreads[index].offers[0].createdByUname;
                 }
             });
-            console.log('Threads: ' + othreads);
             return othreads;
 
         }
@@ -781,18 +923,17 @@ if (Meteor.isClient) {
     Template.OfferThread.helpers({
         isClassiOwner: function () {
             return this.classId === Meteor.userId();
-        }
-        , collaspseStatus: function () {
+        },
+        collaspseStatus: function () {
             return Template.instance().state.get('collapsed');
-        }
-        , numOffers: function () {
+        },
+        numOffers: function () {
             return this.offers.length;
         }
     });
 
     Template.OfferThread.events({
         "click .offer-thread-heading": function (event, tmpl) {
-            console.log('CLicked');
             tmpl.state.set('collapsed', !Template.instance().state.get('collapsed'));
         }
     });
@@ -803,8 +944,8 @@ if (Meteor.isClient) {
 
     //AccountsUI
     Accounts.ui.config({
-        passwordSignupFields: "USERNAME_ONLY"
-        , extraSignupFields: [{
+        passwordSignupFields: "USERNAME_ONLY",
+        extraSignupFields: [{
             fieldName: 'zipcode',
             fieldLabel: 'Zip Code',
             showFieldLabel: true,
@@ -828,10 +969,9 @@ if (Meteor.isClient) {
     Template.ProfileMine.events({
         "submit .user-profile-form" : function(event){
             event.preventDefault();
-            console.log('yolo');
             Meteor.call('updateUserZip', event.target.zipcode.value);
         }
-    })
+    });
 }
    
 
@@ -853,7 +993,7 @@ Meteor.methods({
                   zippy.longitude,
                   zippy.latitude
               ]
-          }
+          };
           Meteor.users.update(Meteor.userId(), {$set: {profile: procop}});
       }
     },
@@ -878,15 +1018,14 @@ Meteor.methods({
         if(Meteor.userId()){
             //make hash of filters
             //values.flatten.concat
-            let keyfil = _.reduce(_.values(filterObj), function(memo, filt){ return memo + '' + filt }, '');
-            console.log('keyfil');
+            let keyfil = _.reduce(_.values(filterObj), function(memo, filt){ return memo + '' + filt;}, '');
 
 
 
             let procop = Meteor.user().profile || {};
 
             //filters obj exists on profile?
-            if(!procop['savedClassiFilters']){
+            if(!procop.savedClassiFilters){
                 //create filters object
                 procop.savedClassiFilters = {};
             }
@@ -902,19 +1041,18 @@ Meteor.methods({
     },
 
     deleteClassiFilter: function(filterObj) {
-        let keyfil = _.reduce(_.values(filterObj), function(memo, filt){ return memo + '' + filt }, '');
+        let keyfil = _.reduce(_.values(filterObj), function(memo, filt){ return memo + '' + filt; }, '');
 
         let procop = Meteor.user().profile || {};
 
         //filters obj exists on profile?
-        if(!procop['savedClassiFilters']){
+        if(!procop.savedClassiFilters){
             //create filters object
             procop.savedClassiFilters = {};
         }
 
         //no val? great, put em in there!
         if(procop.savedClassiFilters[keyfil]){
-            console.log(procop);
             procop.savedClassiFilters = _.omit(procop.savedClassiFilters, keyfil);
             console.log(procop);
             Meteor.users.update(Meteor.userId(), {
@@ -940,6 +1078,7 @@ Meteor.methods({
         });
     },
     addImageToClassified: function(parent, url) {
+        
         Classifieds.update(parent, {
             $addToSet: {
                 images: url
@@ -952,7 +1091,9 @@ Meteor.methods({
         });
     },
     addClassified: function(classi){
-        if(! Meteor.userId()) {
+
+        let filledOut = _.reduce(classi, function(memo, val){return memo && ((_.isString(val) && ! _.isEmpty(val)) || (_.isNumber(val) && !_.isNaN(val)) || (_.isBoolean(val))); }, true);
+        if(! Meteor.userId() || !filledOut) {
             throw new Meteor.Error("not-authorized");
         }
         classi.owner = Meteor.userId();
@@ -960,6 +1101,7 @@ Meteor.methods({
         classi.createdAt = new Date();
         classi.zipcode = Meteor.user().profile.zipcode;
         classi.loc = Meteor.user().profile.loc;
+        classi.images = [];
         Classifieds.insert(classi, function(error, result){
             if(result){
                 Router.go('classified.edit.images', {_id: result});
@@ -974,7 +1116,8 @@ Meteor.methods({
     },
     updateClassified: function (classiId, updateObj){
         var oldObj = Classifieds.findOne(classiId);
-        if(oldObj.owner === Meteor.userId()) {
+        let filledOut = _.reduce(updateObj, function(memo, val){return memo && ((_.isString(val) && ! _.isEmpty(val)) || (_.isNumber(val) && !_.isNaN(val)) || (_.isBoolean(val))); }, true);
+        if(oldObj.owner === Meteor.userId() && filledOut) {
             //copy over hidden fields from old object
             updateObj.createdAt = oldObj.createdAt;
             updateObj.owner = oldObj.owner;
@@ -1093,7 +1236,7 @@ Meteor.methods({
                         if(result){
                             console.log('New Offer created with id: ' + result);
                         }
-                    })
+                    });
                 }
             });
         }else {

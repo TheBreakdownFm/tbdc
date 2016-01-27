@@ -3,6 +3,7 @@
 <!--Layout Templates-->
 <template name="ApplicationLayout">
     <div class="navbar navbar-inverse " role="navigation">
+     
         <div class="container-fluid">
             <div class="navbar-header">
                 <a class="navbar-brand" href="/">TheBreakdown.fm</a>
@@ -17,7 +18,8 @@
                 <ul class="nav navbar-nav">
                     <li>{{#linkTo route='classifieds'}}Classifieds{{/linkTo}}</li>
                     {{#if currentUser}}
-                        <li>{{#linkTo route='classifieds.mine'}}My Ads{{/linkTo}}</li>
+                        <li>{{#linkTo route='dashboard'}}My Stuff{{/linkTo}}</li>
+                        <!--&lt;!&ndash;<li>{{#linkTo route='classifieds.mine'}}My Ads{{/linkTo}}</li>&ndash;&gt;-->
                         <li>{{#linkTo route='classified.new'}}Post a new Ad{{/linkTo}}</li>
                     {{/if}}
                 </ul>
@@ -29,11 +31,66 @@
 
     </div>
     <div class="container">
+        {{ flash }}
         {{> yield}}
 
     </div>
 </template>
 
+
+<template name="Dashboard">
+  <div class="col-xs-12 col-md-6">
+    <h1>Selling</h1>
+    <h2>My Open Ads</h2>
+    {{#each oc in openClassifiedsForUser}}
+    <div class="well">
+      {{>DashboardClassiStub oc}}
+      <h2><span class="label label-info">{{numPendingOffersForClassi oc}} Pending Offers</span></h2>
+    </div>
+    {{/each}}
+    <h2>My Closed Ads</h2>
+
+    {{#each closedClassifiedsForUser}}
+    <div class="well">
+        {{>DashboardClassiStub}}
+    </div>
+    {{/each}}
+  </div>
+  <div class="col-xs-12 col-md-6">
+<h1>Buying</h1>
+        <h2>Accepted Offers</h2>
+    {{#each acceptedOffersForUser}}
+    {{>DashboardOfferStub}}
+    {{/each}}
+    <h2>In Negotiation</h2>
+    <h3>Pending Offers</h3>
+    {{#each pendingOffersForUser}}
+    {{> DashboardOfferStub}}
+    {{/each}}
+    <h3>Declined Offers</h3>
+    {{#each declinedOffersForUser}}
+        {{> DashboardOfferStub}}
+    {{/each}}
+  </div>
+  
+</template>
+
+<template name="DashboardOfferStub">
+
+    <div class="well">
+        {{reldate createdAt}}
+        <h4>Offer for {{formatusd amnt}}</h4>
+    {{> DashboardClassiStub classiForOffer}}
+        </div>
+</template>
+
+<template name="DashboardClassiStub">
+    <h3 class="visit-classi-button">{{title}} <small>listed {{reldate createdAt}} </small></h3>
+</template>
+
+<template name="DashboardSavedSearchStub">
+
+</template>
 <!--Route Templates-->
 <!-- Profile -->
 
@@ -57,7 +114,7 @@
 
 
 <template name="Home">
-    <h1>Welcome to The Breakdown. A place with some car shit. </h1>
+    <h1>Welcome to The Breakdown. Classifieds for car people. </h1>
 </template>
 
 <template name="ClassifiedControl">
@@ -74,37 +131,48 @@
 </template>
 
 <template name="ClassifiedFilterControls">
-    <h4>Filter Controls</h4>
+  <h4>Filter Controls</h4>
     <div class="row">
-        <div class="col-xs-12 well text-center">
-            <form class="form-inline classi-filters">
-                <div class="form-group">
-                                    <div class="btn-group " role="group">
-                    <a type="button" class="btn btn-default filter-type-input-all {{selectedAdType "all"}}">All Ads</a>
-                    <a type="button" class="btn btn-default filter-type-input-cars  {{selectedAdType "car"}}">Just Cars</a>
-                    <a type="button" class="btn btn-default filter-type-input-parts  {{selectedAdType "part"}}">Just Parts</a>
-                </div>
-                </div>
-
-                <div class="form-group">
-                    <input type="text" name="keywords" class="form-control filter-keyword-input" placeholder="Filter Titles" value="{{filterVal 'keywords'}}">
-                    <div class="input-group">
-                        <span class="input-group-addon">$</span>
-                        <input type="number" name="pricemin" class="form-control filter-price-min-input" placeholder="Price Min" value="{{filterVal 'pricemin'}}">
-                    </div>
-
-                    <div class="input-group">
-                        <span class="input-group-addon">$</span>
-                        <input type="number" name="pricemax" class="form-control filter-price-max-input" placeholder="Price Max" value="{{filterVal 'pricemax'}}">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <button class="btn btn-small btn-warning clear-filters-button">Clear Filters</button>
-                    <button class="btn btn-small btn-info save-filters-button">Save These Filters</button>
-                </div>
-            </form>
-        </div>
+      <div class="col-xs-12 well text-center">
+        <form class="form-inline classi-filters">
+          <div class="form-group">
+            <div class="btn-group " role="group">
+              <a type="button" class="btn btn-default filter-type-input-all {{selectedAdType "all"}}">All Ads</a>
+              <a type="button" class="btn btn-default filter-type-input-cars  {{selectedAdType "car"}}">Just Cars</a>
+              <a type="button" class="btn btn-default filter-type-input-parts  {{selectedAdType "part"}}">Just Parts</a>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <input type="text" name="keywords" class="form-control filter-keyword-input" placeholder="Filter Titles" value="{{filterVal 'keywords'}}">
+          </div>
+          <div class="form-group">
+            <div class="input-group">
+              <span class="input-group-addon">$</span>
+              <input type="number" name="pricemin" class="form-control filter-price-min-input" placeholder="Price Min" value="{{filterVal 'pricemin'}}">
+            </div>
+            
+            </div>
+          <div class="form-group">
+            <div class="input-group">
+              <span class="input-group-addon">$</span>
+              <input type="number" name="pricemax" class="filter-price-max-input" placeholder="Price Max" value="{{filterVal 'pricemax'}}">
+            </div>
+            </div>
+          <div class="form-group">
+            <div class="checkbox">
+              <label>
+                <input type="checkbox" name="showAcceptedOffers" class="filter-show-accepted-offers-input" {{showAcceptedOffersChecked}}/>
+                Show Ads w/ Accepted Offers?</label>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <button class="btn btn-small btn-warning clear-filters-button">Clear Filters</button>
+            <button class="btn btn-small btn-info save-filters-button">Save These Filters</button>
+          </div>
+        </form>
+      </div>
     </div>
 </template>
 
@@ -601,7 +669,7 @@
         </div>
         <div class="col-xs-10">
 
-            <input type="text" class="form-control new-mod-input "/>
+            <input type="text" class="form-control new-mod-input " />
         </div>
         <div class="col-xs-2">
             <button class="btn-success btn add-mod-item" type="button"><span class="glyphicon glyphicon-plus"></span> Add</button>
@@ -668,7 +736,7 @@
 </template>
 
 <template name="ClassifiedStub">
-    <div class="col-xs-12 col-md-6 col-lg-4 well ">
+    <div class=" col-md-12 col-lg-6 well ">
         <h2 class="classified-stub">
             {{title}}<br>
             <span class="label label-success">{{formatusd asking}}</span>
@@ -686,7 +754,7 @@
 <template name="OfferNew">
     <div class="row panel">
         <div class="col-xs-12 bg-info">
-            <h2>Make an offer</h2>
+            <h2>Make an Offer</h2>
         </div>
         <div class="col-xs-12">
             <div class="new-offer-form">
@@ -697,13 +765,13 @@
                     <div class="form-group">
                         <label>Offer Amount</label>
 
-                        <input type="number" class="form-control"  name="amnt" value="{{amnt}}"
+                        <input type="number" class="form-control offer-input-field"  name="amnt" value="{{amnt}}"
                                placeholder="Offer Amount"/>
                     </div>
                     <div class="form-group">
                         <label>Message</label>
 
-                        <input type="text" name="msg" class="form-control" value="{{msg}}"
+                        <input type="text" name="msg" class="form-control offer-input-field" value="{{msg}}"
                                placeholder="Message, be nice."/>
                     </div>
                 </form>
